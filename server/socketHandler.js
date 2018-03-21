@@ -1,6 +1,12 @@
 const xxh = require('xxhashjs');
 const physics = require('./physics');
 
+const classes = require('./classes');
+
+const { Character } = classes;
+
+const players = {};
+
 let io;
 
 // Attach custom socket events
@@ -19,7 +25,20 @@ const init = (ioInstance) => {
 
     socket.hash = hash;
 
+    players[hash] = new Character(hash, 20, 20);
+
+    socket.emit('setPlayer', players[hash]);
+
+    socket.on('playerMovement', (data) => {
+      // Should change to a setter that validates data and moves to the existing class!
+      players[socket.hash] = data;
+
+      players[socket.hash].lastUpdate = new Date().getTime();
+      io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
+    });
+
     // socket.on('custom-event', (data) => {});
+
 
     // Placeholder
     socket.on('collision-check', (data) => {
@@ -27,6 +46,9 @@ const init = (ioInstance) => {
     });
 
     socket.on('disconnect', () => {
+      io.sockets.in(socket.roomJoined).emit('deletePlayer', players[socket.hash]);
+      players[socket.hash] = undefined;
+      delete players[socket.hash];
       socket.leave(socket.roomJoined);
     });
   });

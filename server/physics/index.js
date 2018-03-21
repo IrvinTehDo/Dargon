@@ -1,2 +1,9 @@
 // Import custom physics libraries here
-module.exports.collision = require('./collision.js');
+// const collision = require('./collision.js');
+
+// const classes = require('./../classes');
+
+// const { Message } = classes;
+
+// Setup interaction with main node server
+

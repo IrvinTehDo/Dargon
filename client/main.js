@@ -19,6 +19,8 @@ const keyDownEvent = (e) => {
 		player.moveLeft = true;
 	} else if(key === 68 || key === 39){
 		player.moveRight = true;
+	} else if(key === 32){
+		sendAttack();
 	}
 };
 
@@ -45,6 +47,7 @@ const init = () => {
 	
 	socket = io.connect();
 	socket.on('setPlayer', setPlayer);
+	socket.on('receiveAttack', receiveAttack);
 	socket.on('updatePlayer', updatePlayer);
 	socket.on('deletePlayer', deletePlayer);
 	

@@ -24,23 +24,54 @@ const draw = () => {
 		player.y = lerp(player.prevY, player.destY, player.ratio);
 		
 		if(frameCounter % player.anim.speed === 0){
-			player.frame = (player.frame + 1) % player.anim.frameCount;
+			if(player.anim.loop === true){
+				player.frame = (player.frame + 1) % player.anim.frameCount;
+			} else {
+				if(player.frame < player.anim.frameCount - 2){
+					player.frame++;
+				} else {
+					if(player.attacking){
+						player.attacking = false;
+					}
+				}
+			}
 		}
 		
 		if(defaultChar){
-			ctx.drawImage(
-				defaultChar,
-				player.width * player.frame,
-				player.height * (player.anim.row + player.direction),
-				player.width,
-				player.height,
-				player.x,
-				player.y,
-				player.width,
-				player.height
-			);
+			if(player.attacking){
+				ctx.drawImage(
+					defaultChar,
+					player.attWidth * player.frame,
+					(player.anim.row * player.height) + (player.direction * player.attHeight),
+					player.attWidth,
+					player.attHeight,
+					player.x - (player.attWidth / 2),
+					player.y - (player.attHeight / 2),
+					player.attWidth,
+					player.attHeight
+				);
+			} else {
+				ctx.drawImage(
+					defaultChar,
+					player.width * player.frame,
+					player.height * (player.anim.row + player.direction),
+					player.width,
+					player.height,
+					player.x - (player.width / 2),
+					player.y - (player.height / 2),
+					player.width,
+					player.height
+				);
+			}
 		}
 		
 		ctx.restore();
+	}
+};
+
+const switchAnimation = (player, animation) => {
+	if(player.anim.row != player.ANIMS[animation].row){
+		player.frame = 0;
+		player.anim = player.ANIMS[animation];
 	}
 };

@@ -32,11 +32,14 @@ const updateLocalPosition = () => {
 		player.direction = player.DIRECTIONS["down"];
 	}
 	
-	if(player.moveUp || player.moveDown || player.moveLeft || player.moveRight){
-		player.anim = player.ANIMS["walk"];
-	} else {
-		player.anim = player.ANIMS["meditate"];
+	if(!player.attacking){
+		if(player.moveUp || player.moveDown || player.moveLeft || player.moveRight){
+			switchAnimation(player, "walk");
+		} else {
+			switchAnimation(player, "meditate");
 	}
+	}
+	
 	
 	player.ratio = 0.05;
 	socket.emit('playerMovement', player);
@@ -48,6 +51,27 @@ const setPlayer = (data) => {
 	animationFrame = requestAnimationFrame(update);
 	
 	console.log(players[hash]);
+};
+
+const sendAttack = () => {
+	const player = players[hash];
+	
+	const attack = {
+		hash,
+		x: player.x,
+		y: player.y,
+		width: player.width,
+		height: player.height,
+	};
+	
+	socket.emit('sendAttack', attack);
+};
+
+const receiveAttack = (data) => {
+	if(players[data.hash]){
+		players[data.hash].attacking = true;
+		switchAnimation(players[data.hash], "attack");
+	}
 };
 
 const updatePlayer = (data) => {

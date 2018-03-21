@@ -5,36 +5,43 @@ class Character {
         row: 0,
         frameCount: 7,
         speed: 12,
+        loop: true,
       },
       interact: {
         row: 4,
         frameCount: 8,
         speed: 5,
+        loop: false,
       },
       walk: {
         row: 8,
         frameCount: 9,
         speed: 4,
+        loop: true,
       },
       swipe: {
         row: 12,
         frameCount: 6,
         speed: 4,
+        loop: false,
       },
       'fire-arrow': {
         row: 16,
         frameCount: 13,
         speed: 5,
+        loop: false,
       },
       die: {
         row: 20,
         frameCount: 6,
         speed: 10,
+        loop: false,
       },
       attack: {
         row: 21,
         frameCount: 6,
         speed: 4,
+        loop: false,
       },
     };
 
@@ -68,6 +75,7 @@ class Character {
     this.moveLeft = false;
     this.moveDown = false;
     this.moveRight = false;
+    this.attacking = false;
     this.lastUpdate = new Date().getTime();
   }
 }

@@ -79,6 +79,7 @@ var Character = function Character(hash) {
 	this.moveLeft = false;
 	this.moveDown = false;
 	this.moveRight = false;
+	this.attacking = false;
 	this.lastUpdate = new Date().getTime();
 };
 
@@ -111,14 +112,35 @@ var draw = function draw() {
 		player.y = lerp(player.prevY, player.destY, player.ratio);
 
 		if (frameCounter % player.anim.speed === 0) {
-			player.frame = (player.frame + 1) % player.anim.frameCount;
+			if (player.anim.loop === true) {
+				player.frame = (player.frame + 1) % player.anim.frameCount;
+			} else {
+				if (player.frame < player.anim.frameCount - 2) {
+					player.frame++;
+				} else {
+					if (player.attacking) {
+						player.attacking = false;
+					}
+				}
+			}
 		}
 
 		if (defaultChar) {
-			ctx.drawImage(defaultChar, player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x, player.y, player.width, player.height);
+			if (player.attacking) {
+				ctx.drawImage(defaultChar, player.attWidth * player.frame, player.anim.row * player.height + player.direction * player.attHeight, player.attWidth, player.attHeight, player.x - player.attWidth / 2, player.y - player.attHeight / 2, player.attWidth, player.attHeight);
+			} else {
+				ctx.drawImage(defaultChar, player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+			}
 		}
 
 		ctx.restore();
+	}
+};
+
+var switchAnimation = function switchAnimation(player, animation) {
+	if (player.anim.row != player.ANIMS[animation].row) {
+		player.frame = 0;
+		player.anim = player.ANIMS[animation];
 	}
 };
 "use strict";
@@ -146,6 +168,8 @@ var keyDownEvent = function keyDownEvent(e) {
 		player.moveLeft = true;
 	} else if (key === 68 || key === 39) {
 		player.moveRight = true;
+	} else if (key === 32) {
+		sendAttack();
 	}
 };
 
@@ -172,6 +196,7 @@ var init = function init() {
 
 	socket = io.connect();
 	socket.on('setPlayer', setPlayer);
+	socket.on('receiveAttack', receiveAttack);
 	socket.on('updatePlayer', updatePlayer);
 	socket.on('deletePlayer', deletePlayer);
 
@@ -216,10 +241,12 @@ var updateLocalPosition = function updateLocalPosition() {
 		player.direction = player.DIRECTIONS["down"];
 	}
 
-	if (player.moveUp || player.moveDown || player.moveLeft || player.moveRight) {
-		player.anim = player.ANIMS["walk"];
-	} else {
-		player.anim = player.ANIMS["meditate"];
+	if (!player.attacking) {
+		if (player.moveUp || player.moveDown || player.moveLeft || player.moveRight) {
+			switchAnimation(player, "walk");
+		} else {
+			switchAnimation(player, "meditate");
+		}
 	}
 
 	player.ratio = 0.05;
@@ -232,6 +259,27 @@ var setPlayer = function setPlayer(data) {
 	animationFrame = requestAnimationFrame(update);
 
 	console.log(players[hash]);
+};
+
+var sendAttack = function sendAttack() {
+	var player = players[hash];
+
+	var attack = {
+		hash: hash,
+		x: player.x,
+		y: player.y,
+		width: player.width,
+		height: player.height
+	};
+
+	socket.emit('sendAttack', attack);
+};
+
+var receiveAttack = function receiveAttack(data) {
+	if (players[data.hash]) {
+		players[data.hash].attacking = true;
+		switchAnimation(players[data.hash], "attack");
+	}
 };
 
 var updatePlayer = function updatePlayer(data) {

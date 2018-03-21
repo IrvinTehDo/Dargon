@@ -74,6 +74,7 @@ class Character {
 		this.moveLeft = false;
 		this.moveDown = false;
 		this.moveRight = false;
+		this.attacking = false;
 		this.lastUpdate = new Date().getTime();
 	};
 };

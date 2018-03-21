@@ -1,13 +1,17 @@
 const xxh = require('xxhashjs');
-const physics = require('./physics');
+
+const child = require('child_process');
 
 const classes = require('./classes');
 
 const { Character } = classes;
+// const { Message } = classes;
 
 const players = {};
 
 let io;
+
+const physics = child.fork('./server/physics');
 
 // Attach custom socket events
 const init = (ioInstance) => {
@@ -35,6 +39,10 @@ const init = (ioInstance) => {
 
       players[socket.hash].lastUpdate = new Date().getTime();
       io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
+    });
+
+    socket.on('sendAttack', (data) => {
+      io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
 
     // socket.on('custom-event', (data) => {});

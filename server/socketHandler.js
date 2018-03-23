@@ -9,6 +9,12 @@ const { Character } = classes;
 
 const players = {};
 
+const instanceHandler = require('./instanceHandler');
+
+instanceHandler.setUpLobby();
+
+// console.dir(instanceHandler.rooms);
+
 let io;
 
 const physics = child.fork('./server/physics');
@@ -21,8 +27,9 @@ const init = (ioInstance) => {
     const socket = sock;
 
     // One room or multiple?
-    socket.join('room');
-    socket.roomJoined = 'room';
+    socket.join('lobby');
+    socket.roomJoined = 'lobby';
+    instanceHandler.roomJoin('lobby', socket);
 
     const time = new Date().getTime();
     const hash = xxh.h32(`${socket.id}${time}`, 0x010A020B).toString(16);
@@ -32,6 +39,7 @@ const init = (ioInstance) => {
     players[hash] = new Character(hash, 20, 20);
 
     socket.emit('setPlayer', players[hash]);
+    socket.emit('joined', socket.roomJoined);
 
     socket.on('playerMovement', (data) => {
       // Should change to a setter that validates data and moves to the existing class!
@@ -47,6 +55,35 @@ const init = (ioInstance) => {
 
     // socket.on('custom-event', (data) => {});
 
+    // create and join
+    socket.on('createRoom', (roomName) => {
+      if (instanceHandler.roomInit(roomName, socket)) {
+        if (instanceHandler.roomJoin(roomName, socket)) {
+          if (socket.roomName === 'lobby') {
+            delete instanceHandler.rooms.lobby.players[socket.hash];
+          } else {
+            delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
+          }
+
+          // To Do: Remove player/socket from other instance/room and move them to the new one.
+          console.log('create room');
+        }
+      }
+    });
+
+    // join only
+    socket.on('joinRoom', (roomName) => {
+      if (instanceHandler.roomJoin(roomName, socket, io)) {
+        if (socket.roomName === 'lobby') {
+          delete instanceHandler.rooms.lobby.players[socket.hash];
+        } else {
+          delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
+        }
+
+        // To Do: Remove player/socket from other instance/room and move them to the new one.
+        console.log('join room');
+      }
+    });
 
     // Placeholder
     socket.on('collision-check', (data) => {

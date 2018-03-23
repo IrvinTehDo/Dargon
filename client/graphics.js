@@ -71,6 +71,9 @@ const draw = () => {
   //Draw boss
   if(boss){
     
+    boss.x = lerp(boss.prevX, boss.destX, boss.ratio);
+    boss.y = lerp(boss.prevY, boss.destY, boss.ratio);
+    
     if(frameCounter % boss.anim.speed === 0){
       if(boss.anim.loop === true){
         boss.frame = (boss.frame + 1) % boss.anim.frameCount;

@@ -113,3 +113,13 @@ const deletePlayer = (data) => {
 const spawnBoss = (data) => {
 	boss = data;
 }
+
+const updateBoss = (data) => {
+  //console.log(data);
+  const keys = Object.keys(data);
+  
+  for(let i = 0; i < keys.length; i++){
+    const key = keys[i];
+    boss[key] = data[key];
+  }
+};

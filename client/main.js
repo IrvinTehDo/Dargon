@@ -81,6 +81,7 @@ const init = () => {
   socket.on('deletePlayer', deletePlayer);
   
   socket.on('spawnBoss', spawnBoss);
+  socket.on('updateBoss', updateBoss);
 
   const createRoomForm = document.querySelector('#createRoomForm');
   const sendCreateReq = e => joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);

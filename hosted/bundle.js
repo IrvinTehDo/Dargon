@@ -137,6 +137,9 @@ var draw = function draw() {
   //Draw boss
   if (boss) {
 
+    boss.x = lerp(boss.prevX, boss.destX, boss.ratio);
+    boss.y = lerp(boss.prevY, boss.destY, boss.ratio);
+
     if (frameCounter % boss.anim.speed === 0) {
       if (boss.anim.loop === true) {
         boss.frame = (boss.frame + 1) % boss.anim.frameCount;
@@ -240,6 +243,7 @@ var init = function init() {
   socket.on('deletePlayer', deletePlayer);
 
   socket.on('spawnBoss', spawnBoss);
+  socket.on('updateBoss', updateBoss);
 
   var createRoomForm = document.querySelector('#createRoomForm');
   var sendCreateReq = function sendCreateReq(e) {
@@ -373,4 +377,14 @@ var deletePlayer = function deletePlayer(data) {
 
 var spawnBoss = function spawnBoss(data) {
   boss = data;
+};
+
+var updateBoss = function updateBoss(data) {
+  //console.log(data);
+  var keys = Object.keys(data);
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    boss[key] = data[key];
+  }
 };

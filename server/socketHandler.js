@@ -110,6 +110,16 @@ const init = (ioInstance) => {
   });
 };
 
+const update = () => {
+  game.updateBosses((roomId, data) => {
+    io.sockets.in(roomId).emit('updateBoss', data);
+  });
+
+  setTimeout(update, 20);
+};
+
+update();
+
 module.exports = {
   init,
 };

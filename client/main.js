@@ -79,6 +79,7 @@ const init = () => {
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
   socket.on('deletePlayer', deletePlayer);
+  socket.on('disconnect', disconnect);
   
   socket.on('spawnBoss', spawnBoss);
   socket.on('updateBoss', updateBoss);

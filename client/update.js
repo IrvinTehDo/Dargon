@@ -46,9 +46,13 @@ const updateLocalPosition = () => {
 };
 
 const setPlayer = (data) => {
+  
   hash = data.hash;
   players[hash] = data;
-  animationFrame = requestAnimationFrame(update);
+  
+  if(!animationFrame){
+    animationFrame = requestAnimationFrame(update);
+  }
 
   console.log(players[hash]);
 };
@@ -110,12 +114,24 @@ const deletePlayer = (data) => {
   }
 };
 
+const disconnect = () => {
+  if(hash){
+    cancelAnimationFrame(animationFrame);
+    delete players[hash];
+    animationFrame = undefined;
+  }
+};
+
 const spawnBoss = (data) => {
 	boss = data;
 }
 
 const updateBoss = (data) => {
-  //console.log(data);
+  
+  if(!boss){
+    return;
+  }
+  
   const keys = Object.keys(data);
   
   for(let i = 0; i < keys.length; i++){

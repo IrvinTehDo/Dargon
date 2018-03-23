@@ -241,6 +241,7 @@ var init = function init() {
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
   socket.on('deletePlayer', deletePlayer);
+  socket.on('disconnect', disconnect);
 
   socket.on('spawnBoss', spawnBoss);
   socket.on('updateBoss', updateBoss);
@@ -311,9 +312,13 @@ var updateLocalPosition = function updateLocalPosition() {
 };
 
 var setPlayer = function setPlayer(data) {
+
   hash = data.hash;
   players[hash] = data;
-  animationFrame = requestAnimationFrame(update);
+
+  if (!animationFrame) {
+    animationFrame = requestAnimationFrame(update);
+  }
 
   console.log(players[hash]);
 };
@@ -375,12 +380,24 @@ var deletePlayer = function deletePlayer(data) {
   }
 };
 
+var disconnect = function disconnect() {
+  if (hash) {
+    cancelAnimationFrame(animationFrame);
+    delete players[hash];
+    animationFrame = undefined;
+  }
+};
+
 var spawnBoss = function spawnBoss(data) {
   boss = data;
 };
 
 var updateBoss = function updateBoss(data) {
-  //console.log(data);
+
+  if (!boss) {
+    return;
+  }
+
   var keys = Object.keys(data);
 
   for (var i = 0; i < keys.length; i++) {

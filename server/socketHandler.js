@@ -95,7 +95,7 @@ const init = (ioInstance) => {
     if (!game.hasBoss(socket.roomJoined)) {
       game.spawnBoss(socket.roomJoined, (boss) => {
         console.log('sent');
-        io.sockets.in(socket.roomJoined).emit('spawnBoss', { boss });
+        io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
       });
     } else {
       socket.emit('spawnBoss', game.getBoss(socket.roomJoined));

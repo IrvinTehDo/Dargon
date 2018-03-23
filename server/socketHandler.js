@@ -5,6 +5,8 @@ const child = require('child_process');
 const classes = require('./classes');
 
 const { Character } = classes;
+
+const game = require('./game');
 // const { Message } = classes;
 
 const players = {};
@@ -89,6 +91,15 @@ const init = (ioInstance) => {
     socket.on('collision-check', (data) => {
       physics.collision.AABB(data.rect1, data.rect2);
     });
+
+    if (!game.hasBoss(socket.roomJoined)) {
+      game.spawnBoss(socket.roomJoined, (boss) => {
+        console.log('sent');
+        io.sockets.in(socket.roomJoined).emit('spawnBoss', { boss });
+      });
+    } else {
+      socket.emit('spawnBoss', game.getBoss(socket.roomJoined));
+    }
 
     socket.on('disconnect', () => {
       io.sockets.in(socket.roomJoined).emit('deletePlayer', players[socket.hash]);

@@ -109,3 +109,7 @@ const deletePlayer = (data) => {
     delete players[data.hash];
   }
 };
+
+const spawnBoss = (data) => {
+	boss = data;
+}

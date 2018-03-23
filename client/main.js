@@ -3,7 +3,10 @@ let canvas,
 let socket,
   hash;
 let animationFrame;
+
 const players = {};
+let boss;
+
 const room = {};
 const frameCounter = 0;
 
@@ -76,6 +79,8 @@ const init = () => {
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
   socket.on('deletePlayer', deletePlayer);
+  
+  socket.on('spawnBoss', spawnBoss);
 
   const createRoomForm = document.querySelector('#createRoomForm');
   const sendCreateReq = e => joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);

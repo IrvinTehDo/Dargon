@@ -1,3 +1,7 @@
+const bossImageStruct = {
+	"dragon": document.querySelector("#dragonBoss")
+};
+
 const lerp = (pos1, pos2, ratio) => {
   const component1 = (1 - ratio) * pos1;
   const component2 = ratio * pos2;
@@ -56,13 +60,38 @@ const draw = () => {
           player.x - (player.width / 2),
           player.y - (player.height / 2),
           player.width,
-          player.height,
+          player.height
         );
       }
     }
 
     ctx.restore();
   }
+  
+  //Draw boss
+  if(boss){
+    
+    if(frameCounter % boss.anim.speed === 0){
+      if(boss.anim.loop === true){
+        boss.frame = (boss.frame + 1) % boss.anim.frameCount;
+      } else if (boss.frame < boss.anim.frameCount - 2){
+        boss.frame++;
+      }
+    }
+    
+    ctx.drawImage(
+      bossImageStruct[boss.sprite],
+      boss.width * boss.frame,
+      boss.height * (boss.anim.row + boss.direction),
+      boss.width,
+      boss.height,
+      boss.x - (boss.width / 2),
+      boss.y - (boss.height / 2),
+      boss.width,
+      boss.height
+    );
+  }
+  
 };
 
 const switchAnimation = (player, animation) => {

@@ -84,6 +84,10 @@ var Character = function Character(hash) {
 };
 "use strict";
 
+var bossImageStruct = {
+  "dragon": document.querySelector("#dragonBoss")
+};
+
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
   var component2 = ratio * pos2;
@@ -129,6 +133,20 @@ var draw = function draw() {
 
     ctx.restore();
   }
+
+  //Draw boss
+  if (boss) {
+
+    if (frameCounter % boss.anim.speed === 0) {
+      if (boss.anim.loop === true) {
+        boss.frame = (boss.frame + 1) % boss.anim.frameCount;
+      } else if (boss.frame < boss.anim.frameCount - 2) {
+        boss.frame++;
+      }
+    }
+
+    ctx.drawImage(bossImageStruct[boss.sprite], boss.width * boss.frame, boss.height * (boss.anim.row + boss.direction), boss.width, boss.height, boss.x - boss.width / 2, boss.y - boss.height / 2, boss.width, boss.height);
+  }
 };
 
 var switchAnimation = function switchAnimation(player, animation) {
@@ -144,7 +162,10 @@ var canvas = void 0,
 var socket = void 0,
     hash = void 0;
 var animationFrame = void 0;
+
 var players = {};
+var boss = void 0;
+
 var room = {};
 var frameCounter = 0;
 
@@ -217,6 +238,8 @@ var init = function init() {
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
   socket.on('deletePlayer', deletePlayer);
+
+  socket.on('spawnBoss', spawnBoss);
 
   var createRoomForm = document.querySelector('#createRoomForm');
   var sendCreateReq = function sendCreateReq(e) {
@@ -346,4 +369,8 @@ var deletePlayer = function deletePlayer(data) {
   if (players[data.hash]) {
     delete players[data.hash];
   }
+};
+
+var spawnBoss = function spawnBoss(data) {
+  boss = data;
 };

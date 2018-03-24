@@ -12,6 +12,13 @@ const getBoss = roomId => bosses[roomId].being;
 const takeDamage = (roomId, damage, io) => {
   bosses[roomId].being.currentHealth -= damage;
   console.log(`${bosses[roomId].being.sprite} takes ${damage} damage. Current health: ${bosses[roomId].being.currentHealth}`);
+
+  // SUPER DUPER TEMPORARY, resets health to 100 if boss hp is at 0.
+  if (bosses[roomId].being.currentHealth <= 0) {
+    bosses[roomId].being.currentHealth = 100;
+    console.log('resetting health to 100');
+  }
+
   io.sockets.in(roomId).emit('updateBoss', { currentHealth: bosses[roomId].being.currentHealth });
 };
 

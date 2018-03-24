@@ -12,6 +12,9 @@ const frameCounter = 0;
 
 let defaultChar;
 
+let healthContainer,
+  healthBar;
+
 const roomSetup = (roomJoined) => {
   room.roomJoined = roomJoined;
   // To Do: On room join code
@@ -72,6 +75,8 @@ const init = () => {
   ctx = canvas.getContext('2d');
 
   defaultChar = document.querySelector('#defaultChar');
+  healthContainer = document.querySelector("#healthContainer");
+  healthBar = document.querySelector("#healthBar");
 
   socket = io.connect();
   socket.on('joined', roomSetup);

@@ -93,6 +93,8 @@ const draw = () => {
       boss.width,
       boss.height
     );
+    
+    drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
   }
   
 };
@@ -102,4 +104,26 @@ const switchAnimation = (player, animation) => {
     player.frame = 0;
     player.anim = player.ANIMS[animation];
   }
+};
+
+const drawHealthBar = (x, y, health, maxHealth) => {
+  ctx.save();
+  ctx.globalAlpha = 0.8;
+  ctx.drawImage(
+    healthContainer,
+    x - healthContainer.width / 2,
+    y + healthContainer.height,
+  );
+  ctx.drawImage(
+    healthBar,
+    0,
+    0,
+    healthBar.width * (health / maxHealth),
+    healthBar.height,
+    x - (healthBar.width / 2),
+    y + healthContainer.height + 8,
+    healthBar.width * (health / maxHealth),
+    healthBar.height
+  );
+  ctx.restore();
 };

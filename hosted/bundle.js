@@ -150,6 +150,8 @@ var draw = function draw() {
     }
 
     ctx.drawImage(bossImageStruct[boss.sprite], boss.width * boss.frame, boss.height * (boss.anim.row + boss.direction), boss.width, boss.height, boss.x - boss.width / 2, boss.y - boss.height / 2, boss.width, boss.height);
+
+    drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
   }
 };
 
@@ -158,6 +160,14 @@ var switchAnimation = function switchAnimation(player, animation) {
     player.frame = 0;
     player.anim = player.ANIMS[animation];
   }
+};
+
+var drawHealthBar = function drawHealthBar(x, y, health, maxHealth) {
+  ctx.save();
+  ctx.globalAlpha = 0.8;
+  ctx.drawImage(healthContainer, x - healthContainer.width / 2, y + healthContainer.height);
+  ctx.drawImage(healthBar, 0, 0, healthBar.width * (health / maxHealth), healthBar.height, x - healthBar.width / 2, y + healthContainer.height + 8, healthBar.width * (health / maxHealth), healthBar.height);
+  ctx.restore();
 };
 'use strict';
 
@@ -174,6 +184,9 @@ var room = {};
 var frameCounter = 0;
 
 var defaultChar = void 0;
+
+var healthContainer = void 0,
+    healthBar = void 0;
 
 var roomSetup = function roomSetup(roomJoined) {
   room.roomJoined = roomJoined;
@@ -235,6 +248,8 @@ var init = function init() {
   ctx = canvas.getContext('2d');
 
   defaultChar = document.querySelector('#defaultChar');
+  healthContainer = document.querySelector("#healthContainer");
+  healthBar = document.querySelector("#healthBar");
 
   socket = io.connect();
   socket.on('joined', roomSetup);
@@ -333,7 +348,6 @@ var sendAttack = function sendAttack() {
     width: player.width,
     height: player.height
   };
-  console.dir(player.room);
   socket.emit('sendAttack', attack, player.room);
 };
 

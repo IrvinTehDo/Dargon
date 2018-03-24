@@ -31,7 +31,7 @@ class Dragon {
     this.room = roomId;
     this.sprite = 'dragon';
 
-    this.currenthealth = stats.health;
+    this.currentHealth = stats.health;
     this.maxHealth = stats.health;
     this.strength = stats.strength;
     this.defense = stats.defense;

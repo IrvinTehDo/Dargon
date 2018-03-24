@@ -9,6 +9,12 @@ const hasBoss = roomId => bosses[roomId] !== undefined;
 
 const getBoss = roomId => bosses[roomId].being;
 
+const takeDamage = (roomId, damage, io) => {
+  bosses[roomId].being.currentHealth -= damage;
+  console.log(`${bosses[roomId].being.sprite} takes ${damage} damage. Current health: ${bosses[roomId].being.currentHealth}`);
+  io.sockets.in(roomId).emit('updateBoss', { currentHealth: bosses[roomId].being.currentHealth });
+};
+
 const spawnBoss = (roomId, callback) => {
   const randX = Math.floor(Math.random() * 200) + 96;
   const randY = Math.floor(Math.random() * 200) + 96;
@@ -107,6 +113,7 @@ const updateBosses = (callback) => {
 module.exports = {
   hasBoss,
   getBoss,
+  takeDamage,
   spawnBoss,
   updateBosses,
 };

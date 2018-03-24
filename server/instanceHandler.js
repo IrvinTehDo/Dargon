@@ -1,5 +1,7 @@
 const physicsHandler = require('./physics/index.js');
 
+const game = require('./game');
+
 const rooms = {};
 
 const setUpLobby = () => {
@@ -50,7 +52,7 @@ const roomJoin = (roomName, reqSocket) => {
 };
 
 // Process All attacks in a room.
-const processAttacks = (roomName) => {
+const processAttacks = (roomName, io) => {
   if (rooms[roomName].attacks.length > 0) {
     // Check if player and boss hit
 
@@ -69,6 +71,7 @@ const processAttacks = (roomName) => {
 
         if (hit) {
           // Handle damage calculations here
+          game.takeDamage('lobby', 1, io); // temporary call to lobby
           console.log('hit');
         } else {
           console.log('miss');
@@ -82,7 +85,9 @@ const processAttacks = (roomName) => {
 };
 
 const addAttack = (roomName, attack) => {
+  console.log('attack added');
   rooms[roomName].attacks.push(attack);
+  console.dir(rooms[roomName].attacks);
 };
 
 module.exports = {

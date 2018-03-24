@@ -52,7 +52,7 @@ const init = (ioInstance) => {
     });
 
     socket.on('sendAttack', (data, roomName) => {
-      // instanceHandler.addAttack(roomName, data);
+      instanceHandler.addAttack(roomName, data);
       console.log(`attack recieved from ${roomName}`);
       io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
@@ -96,7 +96,8 @@ const init = (ioInstance) => {
 
     if (!game.hasBoss(socket.roomJoined)) {
       game.spawnBoss(socket.roomJoined, (boss) => {
-        console.log('sent');
+        console.log(`spawned boss in ${socket.roomJoined}`);
+        instanceHandler.rooms.lobby.enemies[boss.sprite] = boss;
         io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
       });
     } else {
@@ -116,6 +117,9 @@ const update = () => {
   game.updateBosses((roomId, data) => {
     io.sockets.in(roomId).emit('updateBoss', data);
   });
+
+  // 'lobby' is temporary, should be replaced with roomName.
+  instanceHandler.processAttacks('lobby', io);
 
   setTimeout(update, 20);
 };

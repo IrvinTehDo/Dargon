@@ -51,7 +51,9 @@ const init = (ioInstance) => {
       io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
     });
 
-    socket.on('sendAttack', (data) => {
+    socket.on('sendAttack', (data, roomName) => {
+      // instanceHandler.addAttack(roomName, data);
+      console.log(`attack recieved from ${roomName}`);
       io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
 

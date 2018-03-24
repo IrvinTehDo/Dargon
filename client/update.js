@@ -46,11 +46,10 @@ const updateLocalPosition = () => {
 };
 
 const setPlayer = (data) => {
-  
   hash = data.hash;
   players[hash] = data;
-  
-  if(!animationFrame){
+
+  if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);
   }
 
@@ -67,8 +66,7 @@ const sendAttack = () => {
     width: player.width,
     height: player.height,
   };
-
-  socket.emit('sendAttack', attack);
+  socket.emit('sendAttack', attack, player.room);
 };
 
 const receiveAttack = (data) => {
@@ -115,7 +113,7 @@ const deletePlayer = (data) => {
 };
 
 const disconnect = () => {
-  if(hash){
+  if (hash) {
     cancelAnimationFrame(animationFrame);
     delete players[hash];
     animationFrame = undefined;
@@ -123,18 +121,17 @@ const disconnect = () => {
 };
 
 const spawnBoss = (data) => {
-	boss = data;
-}
+  boss = data;
+};
 
 const updateBoss = (data) => {
-  
-  if(!boss){
+  if (!boss) {
     return;
   }
-  
+
   const keys = Object.keys(data);
-  
-  for(let i = 0; i < keys.length; i++){
+
+  for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     boss[key] = data[key];
   }

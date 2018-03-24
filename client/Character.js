@@ -75,5 +75,6 @@ class Character {
     this.moveRight = false;
     this.attacking = false;
     this.lastUpdate = new Date().getTime();
+    this.room = 'lobby';
   }
 }

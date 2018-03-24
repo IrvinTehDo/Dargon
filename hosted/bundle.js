@@ -81,6 +81,7 @@ var Character = function Character(hash) {
   this.moveRight = false;
   this.attacking = false;
   this.lastUpdate = new Date().getTime();
+  this.room = 'lobby';
 };
 "use strict";
 
@@ -312,7 +313,6 @@ var updateLocalPosition = function updateLocalPosition() {
 };
 
 var setPlayer = function setPlayer(data) {
-
   hash = data.hash;
   players[hash] = data;
 
@@ -333,8 +333,8 @@ var sendAttack = function sendAttack() {
     width: player.width,
     height: player.height
   };
-
-  socket.emit('sendAttack', attack);
+  console.dir(player.room);
+  socket.emit('sendAttack', attack, player.room);
 };
 
 var receiveAttack = function receiveAttack(data) {
@@ -393,7 +393,6 @@ var spawnBoss = function spawnBoss(data) {
 };
 
 var updateBoss = function updateBoss(data) {
-
   if (!boss) {
     return;
   }

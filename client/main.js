@@ -50,7 +50,8 @@ const keyDownEvent = (e) => {
     player.moveLeft = true;
   } else if (key === 68 || key === 39) {
     player.moveRight = true;
-  } else if (key === 32) {
+  } else if (key === 32 && !player.attacking) {
+    player.attacking = true;
     sendAttack();
   }
 };

@@ -117,10 +117,11 @@ var draw = function draw() {
     if (frameCounter % player.anim.speed === 0) {
       if (player.anim.loop === true) {
         player.frame = (player.frame + 1) % player.anim.frameCount;
-      } else if (player.frame < player.anim.frameCount - 2) {
+      } else if (player.frame < player.anim.frameCount - 1) {
         player.frame++;
       } else if (player.attacking) {
         player.attacking = false;
+        switchAnimation(player, "meditate");
       }
     }
 
@@ -223,7 +224,8 @@ var keyDownEvent = function keyDownEvent(e) {
     player.moveLeft = true;
   } else if (key === 68 || key === 39) {
     player.moveRight = true;
-  } else if (key === 32) {
+  } else if (key === 32 && !player.attacking) {
+    player.attacking = true;
     sendAttack();
   }
 };
@@ -321,6 +323,8 @@ var updateLocalPosition = function updateLocalPosition() {
     } else {
       switchAnimation(player, 'meditate');
     }
+  } else {
+    switchAnimation(player, 'attack');
   }
 
   player.ratio = 0.05;
@@ -348,6 +352,7 @@ var sendAttack = function sendAttack() {
     width: player.width,
     height: player.height
   };
+
   socket.emit('sendAttack', attack, player.room);
 };
 

@@ -54,7 +54,7 @@ const init = (ioInstance) => {
     socket.on('sendAttack', (data, roomName) => {
       instanceHandler.addAttack(roomName, data);
       console.log(`attack recieved from ${roomName}`);
-      io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
+      // io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
 
     // socket.on('custom-event', (data) => {});

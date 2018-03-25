@@ -38,9 +38,10 @@ const updateLocalPosition = () => {
     } else {
       switchAnimation(player, 'meditate');
     }
+  } else {
+    switchAnimation(player, 'attack');
   }
-
-
+  
   player.ratio = 0.05;
   socket.emit('playerMovement', player);
 };
@@ -66,6 +67,7 @@ const sendAttack = () => {
     width: player.width,
     height: player.height,
   };
+  
   socket.emit('sendAttack', attack, player.room);
 };
 

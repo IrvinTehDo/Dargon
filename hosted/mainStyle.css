@@ -7,9 +7,21 @@ h1 {
 	display: none;
 }
 
+#main {
+  display: block;
+  text-align: center;
+}
+
 #viewport {
 	border: 2px solid black;
-	display: block;
+	display: inline-block;
 	margin: auto;
 	text-align: center;
+  float: right;
+  margin-right: 20px;
+}
+
+#videoFrame {
+  display: inline-block;
+  float: right;
 }

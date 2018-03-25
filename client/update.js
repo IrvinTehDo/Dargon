@@ -105,7 +105,12 @@ const updatePlayer = (data) => {
   player.moveDown = data.moveDown;
   player.moveLeft = data.moveLeft;
   player.moveRight = data.moveRight;
+  player.attacking = data.attacking;
   player.lastUpdate = data.lastUpdate;
+  
+  if(player.attacking){
+    switchAnimation(player, "attack");
+  }
 };
 
 const deletePlayer = (data) => {

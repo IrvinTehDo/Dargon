@@ -118,7 +118,6 @@ var draw = function draw() {
       if (player.anim.loop === true) {
         player.frame = (player.frame + 1) % player.anim.frameCount;
       } else if (player.frame < player.anim.frameCount - 1) {
-        switchAnimation(player, 'attack');
         player.frame++;
       } else if (player.attacking) {
         player.attacking = false;
@@ -391,7 +390,12 @@ var updatePlayer = function updatePlayer(data) {
   player.moveDown = data.moveDown;
   player.moveLeft = data.moveLeft;
   player.moveRight = data.moveRight;
+  player.attacking = data.attacking;
   player.lastUpdate = data.lastUpdate;
+
+  if (player.attacking) {
+    switchAnimation(player, "attack");
+  }
 };
 
 var deletePlayer = function deletePlayer(data) {

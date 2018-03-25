@@ -89,6 +89,8 @@ var bossImageStruct = {
   "dragon": document.querySelector("#dragonBoss")
 };
 
+var characterImageStruct = {};
+
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
   var component2 = ratio * pos2;
@@ -125,11 +127,11 @@ var draw = function draw() {
       }
     }
 
-    if (defaultChar) {
+    if (characterImageStruct[player.name]) {
       if (player.attacking) {
-        ctx.drawImage(defaultChar, player.attWidth * player.frame, player.anim.row * player.height + player.direction * player.attHeight, player.attWidth, player.attHeight, player.x - player.attWidth / 2, player.y - player.attHeight / 2, player.attWidth, player.attHeight);
+        ctx.drawImage(characterImageStruct[player.name], player.attWidth * player.frame, player.anim.row * player.height + player.direction * player.attHeight, player.attWidth, player.attHeight, player.x - player.attWidth / 2, player.y - player.attHeight / 2, player.attWidth, player.attHeight);
       } else {
-        ctx.drawImage(defaultChar, player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+        ctx.drawImage(characterImageStruct[player.name], player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
       }
     }
 
@@ -246,15 +248,22 @@ var keyUpEvent = function keyUpEvent(e) {
 };
 
 var init = function init() {
-  canvas = document.querySelector('#viewport');
-  ctx = canvas.getContext('2d');
 
-  defaultChar = document.querySelector('#defaultChar');
+  //renderGame(600, 600);
+
+  //canvas = document.querySelector('#viewport');
+  //ctx = canvas.getContext('2d');
+
   healthContainer = document.querySelector("#healthContainer");
   healthBar = document.querySelector("#healthBar");
 
   socket = io.connect();
+
+  //Choose a character first
+  socket.emit('getChars');
+
   socket.on('joined', roomSetup);
+  socket.on('availableChars', handleChars);
   socket.on('setPlayer', setPlayer);
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
@@ -281,6 +290,123 @@ var init = function init() {
 };
 
 window.onload = init;
+"use strict";
+
+//Construct the main window (using a given width and height for the canvas)
+var GameWindow = function GameWindow(props) {
+  return React.createElement(
+    "div",
+    null,
+    React.createElement("iframe", { width: "560", height: "315",
+      src: "http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q",
+      frameBorder: "0", allow: "autoplay; encrypted-media", id: "videoFrame" }),
+    React.createElement("canvas", { id: "viewport", width: props.width, height: props.height })
+  );
+};
+
+//Make a call to render the game window above, and pass in the desired canvas dimensions
+var renderGame = function renderGame(width, height) {
+  ReactDOM.render(React.createElement(GameWindow, { width: width, height: height }), document.querySelector("#main"));
+
+  canvas = document.querySelector('#viewport');
+  ctx = canvas.getContext('2d');
+};
+
+var CharSelect = function CharSelect(props) {
+
+  //Map the characters object into an array
+  var charactersArray = Object.keys(props.characters).map(function (character) {
+    return props.characters[character];
+  });
+
+  //Return jsx to inform that player that the characters are still loading
+  if (charactersArray.length === 0) {
+    return React.createElement(
+      "div",
+      null,
+      React.createElement(
+        "h2",
+        null,
+        "Loading..."
+      )
+    );
+  };
+
+  //Construct panels for each returned character (map function creates a new array)
+  var charList = charactersArray.map(function (character) {
+    //Insert values using curly braces
+    return React.createElement(
+      "div",
+      { "class": "charPreview" },
+      React.createElement(
+        "h2",
+        null,
+        character.name
+      ),
+      React.createElement(
+        "div",
+        { "class": "crop-image" },
+        React.createElement("img", { src: character.imageFile, alt: character.name + " sprite" })
+      ),
+      React.createElement("hr", null),
+      React.createElement(
+        "div",
+        null,
+        React.createElement(
+          "h3",
+          null,
+          "Stats"
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Strength: ",
+          character.strength
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Defense: ",
+          character.defense
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Speed: ",
+          character.speed
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Health: ",
+          character.maxHealth
+        )
+      ),
+      React.createElement("hr", null),
+      React.createElement(
+        "button",
+        { onClick: chooseCharacter, selectid: character.name },
+        "Select"
+      )
+    );
+  });
+
+  //Return all of the panels (the passed in array auto formats)
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(
+      "h1",
+      null,
+      "Select Your Character"
+    ),
+    charList
+  );
+};
+
+var renderCharacterSelect = function renderCharacterSelect(chars) {
+  ReactDOM.render(React.createElement(CharSelect, { characters: chars }), document.querySelector("#main"));
+};
 'use strict';
 
 var update = function update() {
@@ -331,7 +457,37 @@ var updateLocalPosition = function updateLocalPosition() {
   socket.emit('playerMovement', player);
 };
 
+var handleChars = function handleChars(data) {
+  //Load character files into memory for later usage
+  var charKeys = Object.keys(data);
+
+  var _loop = function _loop(i) {
+    var character = data[charKeys[i]];
+
+    var charImage = new Image();
+
+    charImage.onload = function () {
+      characterImageStruct[charKeys[i]] = charImage;
+    };
+
+    charImage.src = character.imageFile;
+  };
+
+  for (var i = 0; i < charKeys.length; i++) {
+    _loop(i);
+  }
+
+  renderCharacterSelect(data);
+};
+
+var chooseCharacter = function chooseCharacter(e) {
+  socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
+};
+
 var setPlayer = function setPlayer(data) {
+
+  renderGame(600, 600);
+
   hash = data.hash;
   players[hash] = data;
 
@@ -365,7 +521,7 @@ var receiveAttack = function receiveAttack(data) {
 
 var updatePlayer = function updatePlayer(data) {
   if (!players[data.hash]) {
-    players[data.hash] = new Character(data.hash);
+    players[data.hash] = data;
   }
 
   if (players[data.hash].lastUpdate >= data.lastUpdate) {

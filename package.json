@@ -4,8 +4,8 @@
   "description": "An online boss fighting game, powered by websockets. Definitely not an MMO.",
   "main": "./src/app.js",
   "scripts": {
-    "build": "babel ./client --out-file ./hosted/bundle.js",
-    "watch": "babel --watch ./client --out-file ./hosted/bundle.js",
+    "build": "babel ./client --presets react --out-file ./hosted/bundle.js",
+    "watch": "babel --watch ./client --presets react --out-file ./hosted/bundle.js",
     "nodemon": "nodemon --watch ./server ./server/app.js",
     "start": "node ./server/app.js",
     "pretest": "eslint ./server --fix",
@@ -24,6 +24,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
     "eslint": "^4.19.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",

@@ -1,5 +1,5 @@
 class Character {
-  constructor(hash, x, y) {
+  constructor(name, hash, x, y) {
     this.ANIMS = {
       meditate: {
         row: 0,
@@ -52,7 +52,7 @@ class Character {
       right: 3,
     };
 
-
+    this.name = name;
     this.hash = hash;
     this.x = x;
     this.y = y;

@@ -25,3 +25,22 @@ h1 {
   display: inline-block;
   float: right;
 }
+
+.charPreview {
+  border: 2px solid black;
+  display: inline-block;
+  width: 15%;
+  margin: 50px 2.5%;
+  padding: 20px 0;
+}
+
+.crop-image {
+  margin: auto;
+  width: 192px;
+  height: 192px;
+  overflow: hidden;
+}
+
+.crop-image img {
+  margin-top: -1728px; 
+}

@@ -46,7 +46,32 @@ const updateLocalPosition = () => {
   socket.emit('playerMovement', player);
 };
 
+const handleChars = (data) => {
+  //Load character files into memory for later usage
+  const charKeys = Object.keys(data);
+  for(let i = 0; i < charKeys.length; i++){
+    const character = data[charKeys[i]];
+    
+    const charImage = new Image();
+    
+    charImage.onload = () => {
+      characterImageStruct[charKeys[i]] = charImage;
+    }
+    
+    charImage.src = character.imageFile;
+  }
+  
+  renderCharacterSelect(data);
+}
+
+const chooseCharacter = (e) => {
+  socket.emit('chooseCharacter', {id: e.target.getAttribute('selectid')});
+};
+
 const setPlayer = (data) => {
+  
+  renderGame(600, 600);
+  
   hash = data.hash;
   players[hash] = data;
 
@@ -80,7 +105,7 @@ const receiveAttack = (data) => {
 
 const updatePlayer = (data) => {
   if (!players[data.hash]) {
-    players[data.hash] = new Character(data.hash);
+    players[data.hash] = data;
   }
 
   if (players[data.hash].lastUpdate >= data.lastUpdate) {

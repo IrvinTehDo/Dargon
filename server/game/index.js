@@ -1,6 +1,13 @@
 // const bossHandler = require('./bossHandler.js');
 const classes = require('./../classes');
 
+// Import character templates
+const charTemplates = require('./charTemplates');
+
+const getAvailableChars = () => charTemplates;
+const validateChar = id => charTemplates[id] !== undefined;
+const getChar = id => charTemplates[id];
+
 const { Dragon } = classes;
 
 const bosses = {};
@@ -123,4 +130,7 @@ module.exports = {
   takeDamage,
   spawnBoss,
   updateBosses,
+  getAvailableChars,
+  validateChar,
+  getChar,
 };

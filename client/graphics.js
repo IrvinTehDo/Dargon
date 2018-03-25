@@ -2,6 +2,8 @@ const bossImageStruct = {
 	"dragon": document.querySelector("#dragonBoss")
 };
 
+let characterImageStruct = {};
+
 const lerp = (pos1, pos2, ratio) => {
   const component1 = (1 - ratio) * pos1;
   const component2 = ratio * pos2;
@@ -38,10 +40,10 @@ const draw = () => {
       }
     }
 
-    if (defaultChar) {
+    if (characterImageStruct[player.name]) {
       if (player.attacking) {
         ctx.drawImage(
-          defaultChar,
+          characterImageStruct[player.name],
           player.attWidth * player.frame,
           (player.anim.row * player.height) + (player.direction * player.attHeight),
           player.attWidth,
@@ -53,7 +55,7 @@ const draw = () => {
         );
       } else {
         ctx.drawImage(
-          defaultChar,
+          characterImageStruct[player.name],
           player.width * player.frame,
           player.height * (player.anim.row + player.direction),
           player.width,

@@ -72,15 +72,22 @@ const keyUpEvent = (e) => {
 };
 
 const init = () => {
-  canvas = document.querySelector('#viewport');
-  ctx = canvas.getContext('2d');
+  
+  //renderGame(600, 600);
+  
+  //canvas = document.querySelector('#viewport');
+  //ctx = canvas.getContext('2d');
 
-  defaultChar = document.querySelector('#defaultChar');
   healthContainer = document.querySelector("#healthContainer");
   healthBar = document.querySelector("#healthBar");
 
   socket = io.connect();
+  
+  //Choose a character first
+  socket.emit('getChars');
+  
   socket.on('joined', roomSetup);
+  socket.on('availableChars', handleChars);
   socket.on('setPlayer', setPlayer);
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);

@@ -38,10 +38,19 @@ const init = (ioInstance) => {
 
     socket.hash = hash;
 
-    players[hash] = new Character(hash, 20, 20);
-
-    socket.emit('setPlayer', players[hash]);
     socket.emit('joined', socket.roomJoined);
+
+    socket.on('getChars', () => {
+      socket.emit('availableChars', game.getAvailableChars());
+    });
+
+    socket.on('chooseCharacter', (data) => {
+      if (game.validateChar(data.id)) {
+        const character = game.getChar(data.id);
+        players[hash] = new Character(character.name, hash, 20, 20);
+        socket.emit('setPlayer', players[hash]);
+      }
+    });
 
     socket.on('playerMovement', (data) => {
       // Should change to a setter that validates data and moves to the existing class!

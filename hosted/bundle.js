@@ -118,6 +118,7 @@ var draw = function draw() {
       if (player.anim.loop === true) {
         player.frame = (player.frame + 1) % player.anim.frameCount;
       } else if (player.frame < player.anim.frameCount - 1) {
+        switchAnimation(player, 'attack');
         player.frame++;
       } else if (player.attacking) {
         player.attacking = false;

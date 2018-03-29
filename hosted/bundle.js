@@ -91,6 +91,23 @@ var bossImageStruct = {
 
 var characterImageStruct = {};
 
+var damageAreas = {
+  "test": {
+    status: {
+      opacity: 0.4,
+      textOffset: [0, 0, 0],
+      speeds: [1, -2, 2]
+    },
+    dimensions: {
+      x: 200,
+      y: 0,
+      w: 100,
+      h: 100
+    },
+    phrases: ["Great Power", "Danger", "Stay Away"]
+  }
+};
+
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
   var component2 = ratio * pos2;
@@ -103,6 +120,8 @@ var draw = function draw() {
   // Draw code
   var playerKeys = Object.keys(players);
   frameCounter++;
+
+  drawDamageArea(damageAreas["test"]);
 
   for (var i = 0; i < playerKeys.length; i++) {
     var player = players[playerKeys[i]];
@@ -170,6 +189,65 @@ var drawHealthBar = function drawHealthBar(x, y, health, maxHealth) {
   ctx.globalAlpha = 0.8;
   ctx.drawImage(healthContainer, x - healthContainer.width / 2, y + healthContainer.height);
   ctx.drawImage(healthBar, 0, 0, healthBar.width * (health / maxHealth), healthBar.height, x - healthBar.width / 2, y + healthContainer.height + 8, healthBar.width * (health / maxHealth), healthBar.height);
+  ctx.restore();
+};
+
+var drawDamageArea = function drawDamageArea(damageArea) {
+  ctx.save();
+  ctx.globalAlpha = damageArea.status.opacity;
+  ctx.fillStyle = "red";
+  ctx.strokeStyle = "red";
+  ctx.font = "60px maras_eyeregular";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillRect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
+  ctx.strokeRect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
+
+  ctx.beginPath();
+  ctx.rect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
+  ctx.clip();
+
+  var textHeight = 40;
+  var currentY = 0;
+  var currentPhraseIndex = 0;
+
+  ctx.globalAlpha = ctx.globalAlpha + 0.2;
+
+  while (currentY + textHeight < damageArea.dimensions.h) {
+    ctx.save();
+    var currentPhrase = damageArea.phrases[currentPhraseIndex];
+
+    var x = damageArea.dimensions.x + damageArea.status.textOffset[currentPhraseIndex];
+    var y = damageArea.dimensions.y + currentY + textHeight / 2;
+
+    var width = ctx.measureText(currentPhrase).width;
+
+    if (damageArea.status.speeds[currentPhraseIndex] < 0) {
+      ctx.translate(x + damageArea.dimensions.w, y);
+      ctx.scale(-1, 1);
+      x = 0;
+      y = 0;
+    }
+
+    ctx.fillText(currentPhrase, x, y);
+
+    while (x + width < damageArea.dimensions.x + damageArea.dimensions.w) {
+      x += width;
+      ctx.fillText(currentPhrase, x, y);
+    }
+
+    damageArea.status.textOffset[currentPhraseIndex] -= damageArea.status.speeds[currentPhraseIndex];
+
+    if (Math.abs(damageArea.status.textOffset[currentPhraseIndex]) >= width) {
+      damageArea.status.textOffset[currentPhraseIndex] = 0;
+    }
+
+    currentPhraseIndex = (currentPhraseIndex + 1) % damageArea.phrases.length;
+    currentY += textHeight;
+
+    ctx.restore();
+  }
+
   ctx.restore();
 };
 'use strict';

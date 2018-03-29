@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'maras_eyeregular';
+    src: url('/assets/fonts/maraeye-webfont.woff2') format('woff2'),
+         url('/assets/fonts/maraeye-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 h1 {
 	display: block;
 	text-align: center;

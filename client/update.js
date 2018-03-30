@@ -116,9 +116,11 @@ const updatePlayer = (data) => {
 
   if (hash === data.hash) {
     // Player specific updates
+    player.currentHealth = data.currentHealth;
     return;
   }
-
+  
+  player.currentHealth = data.currentHealth;
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -166,5 +168,21 @@ const updateBoss = (data) => {
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     boss[key] = data[key];
+  }
+};
+
+const updateBossAttack = (data) => {
+  const progress = data.progress / data.complete;
+  if(!damageAreas[data.id]){
+    damageAreas[data.id] = new DamageArea({x: data.x, y: data.y, w: data.w, h: data.h}, progress);
+  } else {
+    damageAreas[data.id].update(progress);
+  }
+};
+
+const removeBossAttack = (data) => {
+  if(damageAreas[data.id]){
+    damageAreas[data.id] = undefined;
+    delete damageAreas[data.id];
   }
 };

@@ -85,28 +85,79 @@ var Character = function Character(hash) {
 };
 "use strict";
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var DamageArea = function () {
+  function DamageArea(dimensions, progress) {
+    _classCallCheck(this, DamageArea);
+
+    this.status = {
+      opacity: 0.2 + 0.6 * progress
+    };
+
+    this.dimensions = {
+      x: dimensions.x,
+      y: dimensions.y,
+      w: 0 + progress * dimensions.w,
+      h: 0 + progress * dimensions.h
+    };
+
+    this.fullSize = {
+      w: dimensions.w,
+      h: dimensions.h
+    };
+
+    this.phrases = [{
+      text: "Great Power",
+      textOffset: 0,
+      speed: 1
+    }, {
+      text: "Danger",
+      textOffset: 0,
+      speed: -2
+    }, {
+      text: "Stay Away",
+      textOffset: 0,
+      speed: 2
+    }];
+  }
+
+  _createClass(DamageArea, [{
+    key: "growBox",
+    value: function growBox(amount) {
+      this.dimensions.w += amount;
+      this.dimensions.h += amount;
+
+      if (this.dimensions.w > this.fullSize.w) {
+        this.dimensions.w = this.fullSize.w;
+      }
+
+      if (this.dimensions.h > this.fullSize.h) {
+        this.dimensions.h = this.fullSize.h;
+      }
+    }
+  }, {
+    key: "update",
+    value: function update(progress) {
+      this.status.opacity = 0.2 + 0.4 * progress;
+    }
+  }]);
+
+  return DamageArea;
+}();
+
+;
+"use strict";
+
 var bossImageStruct = {
   "dragon": document.querySelector("#dragonBoss")
 };
 
 var characterImageStruct = {};
 
-var damageAreas = {
-  "test": {
-    status: {
-      opacity: 0.4,
-      textOffset: [0, 0, 0],
-      speeds: [1, -2, 2]
-    },
-    dimensions: {
-      x: 200,
-      y: 0,
-      w: 100,
-      h: 100
-    },
-    phrases: ["Great Power", "Danger", "Stay Away"]
-  }
-};
+var damageAreas = {};
 
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
@@ -121,10 +172,13 @@ var draw = function draw() {
   var playerKeys = Object.keys(players);
   frameCounter++;
 
-  drawDamageArea(damageAreas["test"]);
+  var damageAreaKeys = Object.keys(damageAreas);
+  for (var i = 0; i < damageAreaKeys.length; i++) {
+    drawDamageArea(damageAreas[damageAreaKeys[i]]);
+  }
 
-  for (var i = 0; i < playerKeys.length; i++) {
-    var player = players[playerKeys[i]];
+  for (var _i = 0; _i < playerKeys.length; _i++) {
+    var player = players[playerKeys[_i]];
 
     if (player.ratio < 1) {
       player.ratio += 0.05;
@@ -152,6 +206,8 @@ var draw = function draw() {
       } else {
         ctx.drawImage(characterImageStruct[player.name], player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
       }
+
+      drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
     }
 
     ctx.restore();
@@ -213,33 +269,33 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
   ctx.globalAlpha = ctx.globalAlpha + 0.2;
 
-  while (currentY + textHeight < damageArea.dimensions.h) {
+  while (currentY + textHeight < damageArea.dimensions.h + textHeight) {
     ctx.save();
     var currentPhrase = damageArea.phrases[currentPhraseIndex];
 
-    var x = damageArea.dimensions.x + damageArea.status.textOffset[currentPhraseIndex];
+    var x = damageArea.dimensions.x + currentPhrase.textOffset;
     var y = damageArea.dimensions.y + currentY + textHeight / 2;
 
-    var width = ctx.measureText(currentPhrase).width;
+    var width = ctx.measureText(currentPhrase.text).width;
 
-    if (damageArea.status.speeds[currentPhraseIndex] < 0) {
+    if (currentPhrase.speed < 0) {
       ctx.translate(x + damageArea.dimensions.w, y);
       ctx.scale(-1, 1);
       x = 0;
       y = 0;
     }
 
-    ctx.fillText(currentPhrase, x, y);
+    ctx.fillText(currentPhrase.text, x, y);
 
     while (x + width < damageArea.dimensions.x + damageArea.dimensions.w) {
       x += width;
-      ctx.fillText(currentPhrase, x, y);
+      ctx.fillText(currentPhrase.text, x, y);
     }
 
-    damageArea.status.textOffset[currentPhraseIndex] -= damageArea.status.speeds[currentPhraseIndex];
+    currentPhrase.textOffset -= currentPhrase.speed;
 
-    if (Math.abs(damageArea.status.textOffset[currentPhraseIndex]) >= width) {
-      damageArea.status.textOffset[currentPhraseIndex] = 0;
+    if (Math.abs(currentPhrase.textOffset) >= width) {
+      currentPhrase.textOffset = 0;
     }
 
     currentPhraseIndex = (currentPhraseIndex + 1) % damageArea.phrases.length;
@@ -247,6 +303,8 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
     ctx.restore();
   }
+
+  damageArea.growBox(4);
 
   ctx.restore();
 };
@@ -350,6 +408,8 @@ var init = function init() {
 
   socket.on('spawnBoss', spawnBoss);
   socket.on('updateBoss', updateBoss);
+  socket.on('updateBossAttack', updateBossAttack);
+  socket.on('removeBossAttack', removeBossAttack);
 
   var createRoomForm = document.querySelector('#createRoomForm');
   var sendCreateReq = function sendCreateReq(e) {
@@ -610,9 +670,11 @@ var updatePlayer = function updatePlayer(data) {
 
   if (hash === data.hash) {
     // Player specific updates
+    player.currentHealth = data.currentHealth;
     return;
   }
 
+  player.currentHealth = data.currentHealth;
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -660,5 +722,21 @@ var updateBoss = function updateBoss(data) {
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
     boss[key] = data[key];
+  }
+};
+
+var updateBossAttack = function updateBossAttack(data) {
+  var progress = data.progress / data.complete;
+  if (!damageAreas[data.id]) {
+    damageAreas[data.id] = new DamageArea({ x: data.x, y: data.y, w: data.w, h: data.h }, progress);
+  } else {
+    damageAreas[data.id].update(progress);
+  }
+};
+
+var removeBossAttack = function removeBossAttack(data) {
+  if (damageAreas[data.id]) {
+    damageAreas[data.id] = undefined;
+    delete damageAreas[data.id];
   }
 };

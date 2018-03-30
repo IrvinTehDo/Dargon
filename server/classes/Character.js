@@ -52,6 +52,9 @@ class Character {
       right: 3,
     };
 
+    this.currentHealth = 100;
+    this.maxHealth = 100;
+
     this.name = name;
     this.hash = hash;
     this.x = x;

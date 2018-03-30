@@ -4,6 +4,8 @@ const classes = require('./../classes');
 // Import character templates
 const charTemplates = require('./charTemplates');
 
+const physics = require('./../physics/index.js');
+
 const getAvailableChars = () => charTemplates;
 const validateChar = id => charTemplates[id] !== undefined;
 const getChar = id => charTemplates[id];
@@ -15,6 +17,8 @@ const bosses = {};
 const hasBoss = roomId => bosses[roomId] !== undefined;
 
 const getBoss = roomId => bosses[roomId].being;
+
+let prevAttackTime = new Date().getTime();
 
 const takeDamage = (roomId, damage, io) => {
   bosses[roomId].being.currentHealth -= damage;
@@ -44,6 +48,9 @@ const spawnBoss = (roomId, callback) => {
     targetLoc: undefined,
     idleTicks: 0,
     targetIdleTicks: 0,
+    attackTicks: 0,
+    attacks: [],
+    attacksToResolve: [],
   };
 
   callback(getBoss(roomId));
@@ -70,12 +77,38 @@ const assignTargetLoc = (bossObj) => {
   }
 };
 
+const spawnBossAttack = (bossKey) => {
+  const randX = Math.floor(Math.random() * 400);
+  const randWidth = Math.floor(Math.random() * 150) + 50;
+
+  const randY = Math.floor(Math.random() * 400);
+  const randHeight = Math.floor(Math.random() * 150) + 50;
+
+  const attack = {
+    id: `${new Date().getTime()}${bosses[bossKey].attacks.length}`,
+    x: randX,
+    y: randY,
+    w: randWidth,
+    h: randHeight,
+    progress: 0,
+    complete: 3000,
+  };
+
+  bosses[bossKey].attacks.push(attack);
+};
+
 const updateBosses = (callback) => {
   const bossKeys = Object.keys(bosses);
 
   for (let i = 0; i < bossKeys.length; i++) {
     const bossObj = bosses[bossKeys[i]];
     const boss = bossObj.being;
+
+    bossObj.attackTicks++;
+    if (bossObj.attackTicks >= boss.attackFreq) {
+      bossObj.attackTicks = 0;
+      spawnBossAttack(bossKeys[i]);
+    }
 
     if (!bossObj.targetLoc) {
       if (bossObj.idleTicks >= bossObj.targetIdleTicks) {
@@ -124,12 +157,79 @@ const updateBosses = (callback) => {
   }
 };
 
+const updateBossAttacks = (callback) => {
+  const bossKeys = Object.keys(bosses);
+
+  const currentTime = new Date().getTime();
+  const timePassed = currentTime - prevAttackTime;
+  prevAttackTime = currentTime;
+
+  for (let i = 0; i < bossKeys.length; i++) {
+    const boss = bosses[bossKeys[i]];
+
+    for (let j = 0; j < boss.attacks.length; j++) {
+      const attack = boss.attacks[j];
+      attack.progress += timePassed;
+
+      callback(boss.being.room, attack);
+
+      if (attack.progress > attack.complete) {
+        boss.attacksToResolve.push(attack);
+        boss.attacks.splice(j, 1);
+      }
+    }
+  }
+};
+
+const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
+  const bossKeys = Object.keys(bosses);
+
+  for (let i = 0; i < bossKeys.length; i++) {
+    const boss = bosses[bossKeys[i]];
+    const { room } = boss.being;
+    const socketIds = Object.keys(rooms[room].players);
+
+    for (let j = 0; j < boss.attacksToResolve.length; j++) {
+      const attack = boss.attacksToResolve[j];
+
+      for (let k = 0; k < socketIds.length; k++) {
+        const player = players[socketIds[k]];
+
+        if (player) {
+          const hit = physics.checkHitPlayer(
+            {
+              x: attack.x, y: attack.y, width: attack.w, height: attack.h,
+            },
+            {
+              x: player.x - (player.width / 2),
+              y: player.y - (player.height / 2),
+              width: player.width,
+              height: player.height,
+            },
+          );
+
+          if (hit) {
+            player.currentHealth -= 10;
+            updatePlayer(room, player);
+          }
+        }
+      }
+
+      removeAttack(room, attack);
+      boss.attacksToResolve.splice(j, 1);
+      j--;
+    }
+  }
+};
+
 module.exports = {
   hasBoss,
   getBoss,
   takeDamage,
   spawnBoss,
   updateBosses,
+  updateBossAttacks,
+  resolveBossAttacks,
   getAvailableChars,
   validateChar,
   getChar,

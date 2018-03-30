@@ -4,34 +4,7 @@ const bossImageStruct = {
 
 let characterImageStruct = {};
 
-const damageAreas = {
-  "test": {
-    status: {
-      opacity: 0.4,
-      textOffset: [
-        0,
-        0,
-        0
-      ],
-      speeds: [
-        1,
-        -2,
-        2
-      ],
-    },
-    dimensions: {
-      x: 200,
-      y: 0,
-      w: 100,
-      h: 100,
-    },
-    phrases: [
-      "Great Power",
-      "Danger",
-      "Stay Away"
-    ],
-  }
-};
+const damageAreas = {};
 
 const lerp = (pos1, pos2, ratio) => {
   const component1 = (1 - ratio) * pos1;
@@ -46,7 +19,10 @@ const draw = () => {
   const playerKeys = Object.keys(players);
   frameCounter++;
   
-  drawDamageArea(damageAreas["test"]);
+  const damageAreaKeys = Object.keys(damageAreas);
+  for(let i = 0; i < damageAreaKeys.length; i++){
+    drawDamageArea(damageAreas[damageAreaKeys[i]]);
+  }
 
   for (let i = 0; i < playerKeys.length; i++) {
     const player = players[playerKeys[i]];
@@ -97,6 +73,8 @@ const draw = () => {
           player.height
         );
       }
+      
+      drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
     }
 
     ctx.restore();
@@ -183,33 +161,33 @@ const drawDamageArea = (damageArea) => {
   
   ctx.globalAlpha = ctx.globalAlpha + 0.2;
   
-  while(currentY + textHeight < damageArea.dimensions.h){
+  while(currentY + textHeight < damageArea.dimensions.h + textHeight){
     ctx.save();
     const currentPhrase = damageArea.phrases[currentPhraseIndex];
     
-    let x = damageArea.dimensions.x + damageArea.status.textOffset[currentPhraseIndex];
+    let x = damageArea.dimensions.x + currentPhrase.textOffset;
     let y = damageArea.dimensions.y + currentY + textHeight / 2; 
     
-    const width = ctx.measureText(currentPhrase).width;
+    const width = ctx.measureText(currentPhrase.text).width;
     
-    if(damageArea.status.speeds[currentPhraseIndex] < 0){
+    if(currentPhrase.speed < 0){
       ctx.translate(x + damageArea.dimensions.w, y);
       ctx.scale(-1, 1);
       x = 0;
       y = 0;
     }
     
-    ctx.fillText(currentPhrase, x, y);
+    ctx.fillText(currentPhrase.text, x, y);
     
     while(x + width < damageArea.dimensions.x + damageArea.dimensions.w){
       x += width;
-      ctx.fillText(currentPhrase, x, y);
+      ctx.fillText(currentPhrase.text, x, y);
     }
     
-    damageArea.status.textOffset[currentPhraseIndex] -= damageArea.status.speeds[currentPhraseIndex];
+    currentPhrase.textOffset -= currentPhrase.speed;
     
-    if(Math.abs(damageArea.status.textOffset[currentPhraseIndex]) >= width){
-      damageArea.status.textOffset[currentPhraseIndex] = 0;
+    if(Math.abs(currentPhrase.textOffset) >= width){
+      currentPhrase.textOffset = 0;
     }
     
     currentPhraseIndex = (currentPhraseIndex + 1) % damageArea.phrases.length;
@@ -217,6 +195,8 @@ const drawDamageArea = (damageArea) => {
     
     ctx.restore();
   }
+  
+  damageArea.growBox(4);
   
   ctx.restore();
 };

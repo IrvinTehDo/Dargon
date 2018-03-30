@@ -37,6 +37,7 @@ class Dragon {
     this.defense = stats.defense;
     this.speed = stats.speed;
     this.maxIdleTicks = stats.speed * 60;
+    this.attackFreq = stats.speed * 25;
 
     this.x = location.x;
     this.y = location.y;

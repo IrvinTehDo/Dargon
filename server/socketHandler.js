@@ -10,6 +10,23 @@ const game = require('./game');
 // const { Message } = classes;
 
 const players = {};
+const playerAttributesToCopy = [
+  'x',
+  'y',
+  'prevX',
+  'prevY',
+  'destX',
+  'destY',
+  'ratio',
+  'frame',
+  'anim',
+  'direction',
+  'moveUp',
+  'moveDown',
+  'moveLeft',
+  'moveRight',
+  'attacking',
+];
 
 const instanceHandler = require('./instanceHandler');
 
@@ -28,15 +45,15 @@ const init = (ioInstance) => {
   io.on('connection', (sock) => {
     const socket = sock;
 
-    // One room or multiple?
-    socket.join('lobby');
-    socket.roomJoined = 'lobby';
-    instanceHandler.roomJoin('lobby', socket);
-
     const time = new Date().getTime();
     const hash = xxh.h32(`${socket.id}${time}`, 0x010A020B).toString(16);
 
     socket.hash = hash;
+
+    // One room or multiple?
+    socket.join('lobby');
+    socket.roomJoined = 'lobby';
+    instanceHandler.roomJoin('lobby', socket);
 
     socket.emit('joined', socket.roomJoined);
 
@@ -54,10 +71,15 @@ const init = (ioInstance) => {
 
     socket.on('playerMovement', (data) => {
       // Should change to a setter that validates data and moves to the existing class!
-      players[socket.hash] = data;
+      const player = players[socket.hash];
 
-      players[socket.hash].lastUpdate = new Date().getTime();
-      io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
+      for (let i = 0; i < playerAttributesToCopy.length; i++) {
+        const key = playerAttributesToCopy[i];
+        player[key] = data[key];
+      }
+
+      player.lastUpdate = new Date().getTime();
+      io.sockets.in(socket.roomJoined).emit('updatePlayer', player);
     });
 
     socket.on('sendAttack', (data, roomName) => {
@@ -125,6 +147,16 @@ const init = (ioInstance) => {
 const update = () => {
   game.updateBosses((roomId, data) => {
     io.sockets.in(roomId).emit('updateBoss', data);
+  });
+
+  game.updateBossAttacks((roomId, data) => {
+    io.sockets.in(roomId).emit('updateBossAttack', data);
+  });
+
+  game.resolveBossAttacks(players, instanceHandler.rooms, (roomId, data) => {
+    io.sockets.in(roomId).emit('removeBossAttack', data);
+  }, (roomId, player) => {
+    io.sockets.in(roomId).emit('updatePlayer', player);
   });
 
   // 'lobby' is temporary, should be replaced with roomName.

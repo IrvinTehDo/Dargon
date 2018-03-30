@@ -20,7 +20,16 @@ const checkHitEnemy = (attack, enemy) => {
   return false;
 };
 
+const checkHitPlayer = (attack, player) => {
+  if (collision.AABB(attack, player)) {
+    return true;
+  }
+
+  return false;
+};
+
 
 module.exports = {
   checkHitEnemy,
+  checkHitPlayer,
 };

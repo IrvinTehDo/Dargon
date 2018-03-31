@@ -16,11 +16,13 @@ let healthContainer,
   healthBar;
 
 const roomSetup = (roomJoined) => {
+  console.dir(roomJoined);
   room.roomJoined = roomJoined;
+
   // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
-  console.dir(roomJoined);
+  console.dir(`client roomJoined: ${room.roomJoined}`);
 };
 
 const keyDownEvent = (e) => {

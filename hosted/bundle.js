@@ -328,11 +328,13 @@ var healthContainer = void 0,
     healthBar = void 0;
 
 var roomSetup = function roomSetup(roomJoined) {
+  console.dir(roomJoined);
   room.roomJoined = roomJoined;
+
   // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
-  console.dir(roomJoined);
+  console.dir('client roomJoined: ' + room.roomJoined);
 };
 
 var keyDownEvent = function keyDownEvent(e) {
@@ -666,6 +668,7 @@ var setPlayer = function setPlayer(data) {
 
   hash = data.hash;
   players[hash] = data;
+  players[hash].room = room.roomJoined;
 
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);

@@ -80,6 +80,7 @@ const setPlayer = (data) => {
   
   hash = data.hash;
   players[hash] = data;
+  players[hash].room = room.roomJoined;    
 
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);

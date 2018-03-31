@@ -126,6 +126,16 @@ const init = (ioInstance) => {
       }
     });
 
+    socket.on('collectGem', () => {
+      const player = players[socket.hash];
+
+      if (player.gemsToCollect > 0) {
+        player.gemsToCollect--;
+        player.gems++;
+        io.sockets.in(socket.roomJoined).emit('updatePlayer', player);
+      }
+    });
+
     // socket.on('custom-event', (data) => {});
 
     // create and join
@@ -186,6 +196,7 @@ const init = (ioInstance) => {
 
     socket.on('disconnect', () => {
       io.sockets.in(socket.roomJoined).emit('deletePlayer', players[socket.hash]);
+      delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
       players[socket.hash] = undefined;
       delete players[socket.hash];
       socket.leave(socket.roomJoined);

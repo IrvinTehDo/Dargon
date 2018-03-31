@@ -5,6 +5,7 @@ const bossImageStruct = {
 let characterImageStruct = {};
 
 const damageAreas = {};
+const gems = [];
 
 const lerp = (pos1, pos2, ratio) => {
   const component1 = (1 - ratio) * pos1;
@@ -15,6 +16,9 @@ const lerp = (pos1, pos2, ratio) => {
 const draw = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
+  //Draw background
+  ctx.drawImage(dungeonFloor, 0, 0, canvas.width, canvas.height);
+  
   // Draw code
   const playerKeys = Object.keys(players);
   frameCounter++;
@@ -23,6 +27,8 @@ const draw = () => {
   for(let i = 0; i < damageAreaKeys.length; i++){
     drawDamageArea(damageAreas[damageAreaKeys[i]]);
   }
+  
+  drawAndUpdateGems();
 
   for (let i = 0; i < playerKeys.length; i++) {
     const player = players[playerKeys[i]];
@@ -116,7 +122,6 @@ const draw = () => {
       drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
     }
   }
-  
 };
 
 const switchAnimation = (player, animation) => {
@@ -207,4 +212,69 @@ const drawDamageArea = (damageArea) => {
   damageArea.growBox(4);
   
   ctx.restore();
+};
+
+const drawAndUpdateGems = () => {
+  for(let i = 0; i < gems.length; i++){
+    const gem = gems[i];
+    gem.x += gem.vector.x;
+    gem.y += gem.vector.y;
+    
+    gem.ticks++;
+    
+    if(gem.ticks >= gem.activateMagnet){
+      const player = players[hash];
+      const distX = gem.x - player.x;
+      const distY = gem.y - player.y;
+      const magnitude = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+      
+      if(Math.abs(distX) < 40 && Math.abs(distY) < 40){
+        collectGem();
+        gems.splice(i, 1);
+        i--;
+        continue;
+      }
+      
+      gem.vector = {
+        x: -distX / magnitude,
+        y: -distY / magnitude,
+      };
+    } else if (gem.ticks < gem.activateMagnet){
+      gem.vector = {
+        x: gem.vector.x * 0.98,
+        y: gem.vector.y * 0.98,
+      };
+    }
+    
+    if(gem.x < 0){
+      gem.vector.x *= -1;
+      gem.x = 0;
+    } else if(gem.x > canvas.width){
+      gem.vector.x *= -1;
+      gem.x = canvas.width;
+    }
+    
+    if(gem.y < 0){
+      gem.vector.y *= -1;
+      gem.y = 0;
+    } else if(gem.y > canvas.height){
+      gem.vector.y *= -1;
+      gem.y = canvas.height;
+    }
+    
+    const gemSpriteX = 125 * (gem.sprite % 2);
+    const gemSpriteY = 125 * Math.floor(gem.sprite / 2);
+    
+    ctx.drawImage(
+      gemSprite,
+      gemSpriteX,
+      gemSpriteY,
+      125,
+      125,
+      gem.x,
+      gem.y,
+      25,
+      25
+    );
+  }
 };

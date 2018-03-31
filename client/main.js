@@ -10,7 +10,7 @@ let boss;
 const room = {};
 const frameCounter = 0;
 
-let defaultChar;
+let dungeonFloor, gemSprite;
 
 let healthContainer,
   healthBar;
@@ -72,6 +72,8 @@ const init = () => {
   // canvas = document.querySelector('#viewport');
   // ctx = canvas.getContext('2d');
 
+  gemSprite = document.querySelector("#gemSprite");
+  dungeonFloor = document.querySelector("#dungeonFloor");
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
@@ -94,6 +96,7 @@ const init = () => {
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
   socket.on('bossDeath', bossDeath);
+  socket.on('dispenseGems', dispenseGems);
 
 
   document.body.addEventListener('keydown', keyDownEvent);

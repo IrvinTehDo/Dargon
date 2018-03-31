@@ -1,2 +1,4 @@
 Dungeon Tileset:
 https://opengameart.org/content/dungeon-tileset
+Gem Sprites:
+"Clint Bellanger": https://opengameart.org/content/gem-icons

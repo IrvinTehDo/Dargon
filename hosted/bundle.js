@@ -162,6 +162,7 @@ var bossImageStruct = {
 var characterImageStruct = {};
 
 var damageAreas = {};
+var gems = [];
 
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
@@ -172,6 +173,9 @@ var lerp = function lerp(pos1, pos2, ratio) {
 var draw = function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  //Draw background
+  ctx.drawImage(dungeonFloor, 0, 0, canvas.width, canvas.height);
+
   // Draw code
   var playerKeys = Object.keys(players);
   frameCounter++;
@@ -180,6 +184,8 @@ var draw = function draw() {
   for (var i = 0; i < damageAreaKeys.length; i++) {
     drawDamageArea(damageAreas[damageAreaKeys[i]]);
   }
+
+  drawAndUpdateGems();
 
   for (var _i = 0; _i < playerKeys.length; _i++) {
     var player = players[playerKeys[_i]];
@@ -320,7 +326,62 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
   ctx.restore();
 };
-'use strict';
+
+var drawAndUpdateGems = function drawAndUpdateGems() {
+  for (var i = 0; i < gems.length; i++) {
+    var gem = gems[i];
+    gem.x += gem.vector.x;
+    gem.y += gem.vector.y;
+
+    gem.ticks++;
+
+    if (gem.ticks >= gem.activateMagnet) {
+      var player = players[hash];
+      var distX = gem.x - player.x;
+      var distY = gem.y - player.y;
+      var magnitude = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+
+      if (Math.abs(distX) < 40 && Math.abs(distY) < 40) {
+        collectGem();
+        gems.splice(i, 1);
+        i--;
+        continue;
+      }
+
+      gem.vector = {
+        x: -distX / magnitude,
+        y: -distY / magnitude
+      };
+    } else if (gem.ticks < gem.activateMagnet) {
+      gem.vector = {
+        x: gem.vector.x * 0.98,
+        y: gem.vector.y * 0.98
+      };
+    }
+
+    if (gem.x < 0) {
+      gem.vector.x *= -1;
+      gem.x = 0;
+    } else if (gem.x > canvas.width) {
+      gem.vector.x *= -1;
+      gem.x = canvas.width;
+    }
+
+    if (gem.y < 0) {
+      gem.vector.y *= -1;
+      gem.y = 0;
+    } else if (gem.y > canvas.height) {
+      gem.vector.y *= -1;
+      gem.y = canvas.height;
+    }
+
+    var gemSpriteX = 125 * (gem.sprite % 2);
+    var gemSpriteY = 125 * Math.floor(gem.sprite / 2);
+
+    ctx.drawImage(gemSprite, gemSpriteX, gemSpriteY, 125, 125, gem.x, gem.y, 25, 25);
+  }
+};
+"use strict";
 
 var canvas = void 0,
     ctx = void 0;
@@ -334,7 +395,8 @@ var boss = void 0;
 var room = {};
 var frameCounter = 0;
 
-var defaultChar = void 0;
+var dungeonFloor = void 0,
+    gemSprite = void 0;
 
 var healthContainer = void 0,
     healthBar = void 0;
@@ -346,7 +408,7 @@ var roomSetup = function roomSetup(roomJoined) {
   // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
-  console.dir('client roomJoined: ' + room.roomJoined);
+  console.dir("client roomJoined: " + room.roomJoined);
 };
 
 var keyDownEvent = function keyDownEvent(e) {
@@ -396,6 +458,8 @@ var init = function init() {
   // canvas = document.querySelector('#viewport');
   // ctx = canvas.getContext('2d');
 
+  gemSprite = document.querySelector("#gemSprite");
+  dungeonFloor = document.querySelector("#dungeonFloor");
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
@@ -418,6 +482,7 @@ var init = function init() {
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
   socket.on('bossDeath', bossDeath);
+  socket.on('dispenseGems', dispenseGems);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
@@ -467,6 +532,16 @@ var GameInfo = function GameInfo(props) {
       "h2",
       null,
       "Player Stats"
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Score (Gems): ",
+        props.info.player.gems
+      )
     ),
     React.createElement(
       "p",
@@ -588,8 +663,8 @@ var GameInfo = function GameInfo(props) {
       React.createElement(
         "span",
         null,
-        "Gold Reward: ",
-        props.info.boss.gold
+        "Gem Reward: ",
+        props.info.boss.gems
       )
     )
   );
@@ -841,14 +916,14 @@ var aggregateGameInfo = function aggregateGameInfo() {
       name: boss.name,
       level: boss.level,
       exp: boss.exp,
-      gold: boss.gold
+      gems: boss.gems
     };
   } else {
     bossDetails = {
       name: "N/A",
       level: "N/A",
       exp: "N/A",
-      gold: "N/A"
+      gems: "N/A"
     };
   }
 
@@ -859,6 +934,7 @@ var aggregateGameInfo = function aggregateGameInfo() {
       defense: player.defense,
       level: player.level,
       exp: player.exp,
+      gems: player.gems,
       prevLevel: player.prevLevel,
       nextLevel: player.nextLevel,
       points: player.pointsToAllocate
@@ -919,7 +995,7 @@ var updatePlayer = function updatePlayer(data) {
   var player = players[data.hash];
 
   var flagToReRenderInfo = false;
-  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate) {
+  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems || data.gems) {
     flagToReRenderInfo = true;
   }
 
@@ -933,6 +1009,7 @@ var updatePlayer = function updatePlayer(data) {
   player.prevLevel = data.prevLevel;
   player.nextLevel = data.nextLevel;
   player.pointsToAllocate = data.pointsToAllocate;
+  player.gems = data.gems;
 
   if (flagToReRenderInfo) {
     var info = aggregateGameInfo();
@@ -1033,4 +1110,36 @@ var upgradeChar = function upgradeChar(e) {
       socket.emit('characterUpgrade', { upgrade: 'defense' });
       break;
   }
+};
+
+var dispenseGems = function dispenseGems(data) {
+  var gemCount = data.gems;
+
+  for (var i = 0; i < gemCount; i++) {
+    var randAngle = Math.random() * 360;
+    var radian = randAngle * Math.PI / 180;
+    var speed = 20 * Math.random() + 2;
+    var vector = {
+      x: Math.sin(radian) * speed,
+      y: Math.cos(radian) * speed
+    };
+    var sprite = Math.floor(Math.random() * 4);
+
+    var gem = {
+      x: boss.x,
+      y: boss.y,
+      ticks: 0,
+      activateMagnet: 200,
+      radian: radian,
+      speed: speed,
+      vector: vector,
+      sprite: sprite
+    };
+
+    gems.push(gem);
+  }
+};
+
+var collectGem = function collectGem() {
+  socket.emit('collectGem');
 };

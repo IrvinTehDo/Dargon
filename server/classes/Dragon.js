@@ -51,7 +51,7 @@ class Dragon {
     + (stats.strength * 30)
     + (stats.defense * 20)
     + (stats.speed * 20);
-    this.gold = stats.health;
+    this.gems = stats.health;
 
     this.opacity = 1;
     this.alive = true;

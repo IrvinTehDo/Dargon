@@ -40,6 +40,9 @@ const GameInfo = (props) => {
       <hr />
       <h2>Player Stats</h2>
       <p>
+        <span>Score (Gems): {props.info.player.gems}</span>
+      </p>
+      <p>
         <span>Character Points: {props.info.player.points}</span>
       </p>
       <p>
@@ -76,7 +79,7 @@ const GameInfo = (props) => {
         <span>Exp Reward: {props.info.boss.exp}</span>
       </p>
       <p>
-        <span>Gold Reward: {props.info.boss.gold}</span>
+        <span>Gem Reward: {props.info.boss.gems}</span>
       </p>
     </div>
   );

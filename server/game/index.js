@@ -39,11 +39,13 @@ const calcAggregateLevel = (players, roomHashes) => {
 const bossDeath = (roomId, players, playerHashes, io) => {
   const boss = bosses[roomId].being;
   const { exp } = boss;
+  const { gems } = boss;
   const hashes = Object.keys(playerHashes);
 
   for (let i = 0; i < hashes.length; i++) {
     const player = players[hashes[i]];
     player.exp += exp;
+    player.gemsToCollect = gems;
 
     if (player.exp > player.nextLevel) {
       player.level++;
@@ -54,6 +56,7 @@ const bossDeath = (roomId, players, playerHashes, io) => {
 
     io.sockets.in(roomId).emit('updatePlayer', player);
     io.sockets.in(roomId).emit('bossDeath');
+    io.sockets.in(roomId).emit('dispenseGems', { gems: boss.gems });
   }
 
   delete bosses[roomId];
@@ -122,8 +125,8 @@ const assignTargetLoc = (bossObj) => {
   boss.targetIdleTicks = Math.floor(Math.random() * boss.being.maxIdleTicks);
 
   boss.targetLoc = {
-    x: Math.floor(Math.random() * 500) + 96,
-    y: Math.floor(Math.random() * 500) + 96,
+    x: Math.floor(Math.random() * 400) + 96,
+    y: Math.floor(Math.random() * 400) + 96,
   };
 
   const xDiff = boss.being.x - boss.targetLoc.x;

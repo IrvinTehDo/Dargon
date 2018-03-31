@@ -82,14 +82,14 @@ const aggregateGameInfo = () => {
       name: boss.name,
       level: boss.level,
       exp: boss.exp,
-      gold: boss.gold,
+      gems: boss.gems,
     };
   } else {
     bossDetails = {
       name: "N/A",
       level: "N/A",
       exp: "N/A",
-      gold: "N/A",
+      gems: "N/A",
     };
   }
   
@@ -100,6 +100,7 @@ const aggregateGameInfo = () => {
       defense: player.defense,
       level: player.level,
       exp: player.exp,
+      gems: player.gems,
       prevLevel: player.prevLevel,
       nextLevel: player.nextLevel,
       points: player.pointsToAllocate,
@@ -161,7 +162,7 @@ const updatePlayer = (data) => {
   const player = players[data.hash];
 
   let flagToReRenderInfo = false;
-  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate){
+  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems || data.gems){
     flagToReRenderInfo = true;
   }
   
@@ -175,6 +176,7 @@ const updatePlayer = (data) => {
   player.prevLevel = data.prevLevel;
   player.nextLevel = data.nextLevel;
   player.pointsToAllocate = data.pointsToAllocate;
+  player.gems = data.gems;
   
   if(flagToReRenderInfo){
     const info = aggregateGameInfo();
@@ -275,4 +277,36 @@ const upgradeChar = (e) => {
       socket.emit('characterUpgrade', {upgrade: 'defense'});
       break;
   }
+};
+
+const dispenseGems = (data) => {
+  const gemCount = data.gems;
+  
+  for(let i = 0; i < gemCount; i++){
+    const randAngle = Math.random() * 360;
+    const radian = (randAngle * Math.PI) / 180;
+    const speed = 20 * Math.random() + 2;
+    const vector = {
+      x: Math.sin(radian) * speed,
+      y: Math.cos(radian) * speed,
+    }
+    const sprite = Math.floor(Math.random() * 4);
+    
+    const gem = {
+      x: boss.x,
+      y: boss.y,
+      ticks: 0,
+      activateMagnet: 200,
+      radian,
+      speed,
+      vector,
+      sprite,
+    }
+    
+    gems.push(gem);
+  }
+};
+
+const collectGem = () => {
+  socket.emit('collectGem');
 };

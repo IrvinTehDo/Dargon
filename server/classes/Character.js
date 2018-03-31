@@ -60,7 +60,9 @@ class Character {
     this.exp = 0;
     this.prevLevel = 0;
     this.nextLevel = 200;
+    this.gems = 0;
     this.pointsToAllocate = 0;
+    this.gemsToCollect = 0;
 
     this.name = name;
     this.hash = hash;

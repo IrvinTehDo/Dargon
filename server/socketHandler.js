@@ -55,7 +55,7 @@ const init = (ioInstance) => {
     socket.roomJoined = 'lobby';
     instanceHandler.roomJoin('lobby', socket);
 
-    socket.emit('joined', socket.roomJoined);
+    // socket.emit('joined', socket.roomJoined);
 
     socket.on('getChars', () => {
       socket.emit('availableChars', game.getAvailableChars());
@@ -65,9 +65,25 @@ const init = (ioInstance) => {
       if (game.validateChar(data.id)) {
         const character = game.getChar(data.id);
         players[hash] = new Character(character.name, hash, 20, 20);
-        socket.emit('setPlayer', players[hash]);
+        // socket.emit('setPlayer', players[hash]);
+        socket.emit('moveToLobby');
       }
     });
+
+    socket.on('requestCharacterData', () => {
+      socket.emit('setPlayer', players[hash]);
+
+      if (!game.hasBoss(socket.roomJoined)) {
+        game.spawnBoss(socket.roomJoined, (boss) => {
+          console.log(`spawned boss in ${socket.roomJoined}`);
+          instanceHandler.rooms[socket.roomJoined].enemies[boss.sprite] = boss;
+          io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
+        });
+      } else {
+        socket.emit('spawnBoss', game.getBoss(socket.roomJoined));
+      }
+    });
+
 
     socket.on('playerMovement', (data) => {
       // Should change to a setter that validates data and moves to the existing class!
@@ -94,14 +110,16 @@ const init = (ioInstance) => {
     socket.on('createRoom', (roomName) => {
       if (instanceHandler.roomInit(roomName, socket)) {
         if (instanceHandler.roomJoin(roomName, socket)) {
-          if (socket.roomName === 'lobby') {
+          if (socket.roomJoined === 'lobby') {
+            delete instanceHandler.rooms.lobby.players[socket.hash];
             delete instanceHandler.rooms.lobby.players[socket.hash];
           } else {
             delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
           }
-
+          socket.roomJoined = roomName;
           // To Do: Remove player/socket from other instance/room and move them to the new one.
-          console.log('create room');
+          socket.emit('joined', roomName);
+          console.log('create room and joined');
         }
       }
     });
@@ -109,14 +127,17 @@ const init = (ioInstance) => {
     // join only
     socket.on('joinRoom', (roomName) => {
       if (instanceHandler.roomJoin(roomName, socket, io)) {
-        if (socket.roomName === 'lobby') {
+        if (socket.roomJoined === 'lobby') {
+          delete instanceHandler.rooms.lobby.players[socket.hash];
           delete instanceHandler.rooms.lobby.players[socket.hash];
         } else {
           delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
         }
-
+        socket.roomJoined = roomName;
         // To Do: Remove player/socket from other instance/room and move them to the new one.
-        console.log('join room');
+
+        socket.emit('joined', roomName);
+        console.log('joined room');
       }
     });
 
@@ -125,15 +146,18 @@ const init = (ioInstance) => {
       physics.collision.AABB(data.rect1, data.rect2);
     });
 
-    if (!game.hasBoss(socket.roomJoined)) {
-      game.spawnBoss(socket.roomJoined, (boss) => {
-        console.log(`spawned boss in ${socket.roomJoined}`);
-        instanceHandler.rooms.lobby.enemies[boss.sprite] = boss;
-        io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
-      });
-    } else {
-      socket.emit('spawnBoss', game.getBoss(socket.roomJoined));
-    }
+
+    // Moved to socket.on('requestCharacterData')
+
+    //    if (!game.hasBoss(socket.roomJoined)) {
+    //      game.spawnBoss(socket.roomJoined, (boss) => {
+    //        console.log(`spawned boss in ${socket.roomJoined}`);
+    //        instanceHandler.rooms[socket.roomJoined].enemies[boss.sprite] = boss;
+    //        io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
+    //      });
+    //    } else {
+    //      socket.emit('spawnBoss', game.getBoss(socket.roomJoined));
+    //    }
 
     socket.on('disconnect', () => {
       io.sockets.in(socket.roomJoined).emit('deletePlayer', players[socket.hash]);
@@ -160,7 +184,7 @@ const update = () => {
   });
 
   // 'lobby' is temporary, should be replaced with roomName.
-  instanceHandler.processAttacks('lobby', io);
+  instanceHandler.processAttacks(io);
 
   setTimeout(update, 20);
 };

@@ -77,3 +77,48 @@ const renderCharacterSelect = (chars) => {
     document.querySelector("#main")
   );
 };
+
+// Handles join/create room button. Only allows users to join rooms only if they're in the lobby.
+const joinRoom = (e, roomName, create) => {
+  console.log('join/create req recieved');
+  console.log(room.roomJoined);    
+  if (room.roomJoined !== 'lobby') {
+    e.preventDefault();
+    return false;
+  }
+
+  if (create) {
+    socket.emit('createRoom', roomName);
+  } else {
+    socket.emit('joinRoom', roomName);
+  }
+
+  e.preventDefault();
+  return false;
+};
+
+const renderLobby = () => {
+    ReactDOM.render(
+        <div id="roomContainer">
+            <form id="createRoomForm">
+                <label for="createRoom">Create a Room</label>
+                <input id="createRoomField" type="text" name="createRoom" maxlength="4" size="4"></input>
+                    <input type="submit" value="Create Room"></input>
+            </form>
+                <form id="joinRoomForm">
+                <label for="joinRoom">Join a Room</label>
+                <input id="joinRoomField" type="text" name="joinRoom" maxlength="4" size ="4"></input>
+                <input type="submit" value="Join Room"></input>
+            </form>
+        </div>,
+        document.querySelector("#main")
+    ); 
+                        
+  const createRoomForm = document.querySelector('#createRoomForm');
+  const sendCreateReq = e => joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);
+  createRoomForm.addEventListener('submit', sendCreateReq);
+
+  const joinRoomForm = document.querySelector('#joinRoomForm');
+  const sendJoinReq = e => joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
+  joinRoomForm.addEventListener('submit', sendJoinReq);    
+};

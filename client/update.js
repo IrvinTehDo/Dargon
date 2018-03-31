@@ -68,12 +68,19 @@ const chooseCharacter = (e) => {
   socket.emit('chooseCharacter', {id: e.target.getAttribute('selectid')});
 };
 
+const handleLobby = (data) => {
+    room.roomJoined = 'lobby';
+    renderLobby(data);
+};
+
+
 const setPlayer = (data) => {
   
   renderGame(600, 600);
   
   hash = data.hash;
   players[hash] = data;
+  players[hash].room = room.roomJoined;    
 
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);

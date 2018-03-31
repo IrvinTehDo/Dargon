@@ -16,26 +16,13 @@ let healthContainer,
   healthBar;
 
 const roomSetup = (roomJoined) => {
-  room.roomJoined = roomJoined;
-  // To Do: On room join code
   console.dir(roomJoined);
-};
+  room.roomJoined = roomJoined;
 
-// Handles join/create room button. Only allows users to join rooms only if they're in the lobby.
-const joinRoom = (e, roomName, create) => {
-  if (room.roomJoined !== 'lobby') {
-    e.preventDefault();
-    return false;
-  }
-
-  if (create) {
-    socket.emit('createRoom', roomName);
-  } else {
-    socket.emit('joinRoom', roomName);
-  }
-
-  e.preventDefault();
-  return false;
+  // To Do: On room join code
+  // Ask for player data and set up the game.
+  socket.emit('requestCharacterData');
+  console.dir(`client roomJoined: ${room.roomJoined}`);
 };
 
 const keyDownEvent = (e) => {
@@ -72,40 +59,33 @@ const keyUpEvent = (e) => {
 };
 
 const init = () => {
-  
-  //renderGame(600, 600);
-  
-  //canvas = document.querySelector('#viewport');
-  //ctx = canvas.getContext('2d');
+  // renderGame(600, 600);
 
-  healthContainer = document.querySelector("#healthContainer");
-  healthBar = document.querySelector("#healthBar");
+  // canvas = document.querySelector('#viewport');
+  // ctx = canvas.getContext('2d');
+
+  healthContainer = document.querySelector('#healthContainer');
+  healthBar = document.querySelector('#healthBar');
 
   socket = io.connect();
-  
-  //Choose a character first
+
+  // Choose a character first
   socket.emit('getChars');
-  
+
   socket.on('joined', roomSetup);
   socket.on('availableChars', handleChars);
+  socket.on('moveToLobby', handleLobby);
   socket.on('setPlayer', setPlayer);
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
   socket.on('deletePlayer', deletePlayer);
   socket.on('disconnect', disconnect);
-  
+
   socket.on('spawnBoss', spawnBoss);
   socket.on('updateBoss', updateBoss);
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
 
-  const createRoomForm = document.querySelector('#createRoomForm');
-  const sendCreateReq = e => joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);
-  createRoomForm.addEventListener('submit', sendCreateReq);
-
-  const joinRoomForm = document.querySelector('#joinRoomForm');
-  const sendJoinReq = e => joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
-  joinRoomForm.addEventListener('submit', sendJoinReq);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);

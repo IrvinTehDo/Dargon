@@ -22,15 +22,13 @@ const roomInit = (roomName, reqSocket) => {
     return false;
   }
 
-  // console.log('instance created');
-
   rooms[roomName] = {
     roomName,
     players: {},
     attacks: [],
     enemies: {},
   };
-
+  console.log(`instance ${roomName} created`);
   console.dir(rooms);
 
   return true;
@@ -39,7 +37,7 @@ const roomInit = (roomName, reqSocket) => {
 const roomJoin = (roomName, reqSocket) => {
   if (!rooms[roomName]) {
     reqSocket.emit('roomError', `${roomName} does not exist`);
-    // console.dir(`${roomName} does not exist`);
+    console.dir(`${roomName} does not exist`);
     return false;
   }
 

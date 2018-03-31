@@ -68,6 +68,12 @@ const chooseCharacter = (e) => {
   socket.emit('chooseCharacter', {id: e.target.getAttribute('selectid')});
 };
 
+const handleLobby = (data) => {
+    room.roomJoined = 'lobby';
+    renderLobby(data);
+};
+
+
 const setPlayer = (data) => {
   
   renderGame(600, 600);

@@ -330,24 +330,9 @@ var healthContainer = void 0,
 var roomSetup = function roomSetup(roomJoined) {
   room.roomJoined = roomJoined;
   // To Do: On room join code
+  // Ask for player data and set up the game.
+  socket.emit('requestCharacterData');
   console.dir(roomJoined);
-};
-
-// Handles join/create room button. Only allows users to join rooms only if they're in the lobby.
-var joinRoom = function joinRoom(e, roomName, create) {
-  if (room.roomJoined !== 'lobby') {
-    e.preventDefault();
-    return false;
-  }
-
-  if (create) {
-    socket.emit('createRoom', roomName);
-  } else {
-    socket.emit('joinRoom', roomName);
-  }
-
-  e.preventDefault();
-  return false;
 };
 
 var keyDownEvent = function keyDownEvent(e) {
@@ -384,22 +369,22 @@ var keyUpEvent = function keyUpEvent(e) {
 };
 
 var init = function init() {
+  // renderGame(600, 600);
 
-  //renderGame(600, 600);
+  // canvas = document.querySelector('#viewport');
+  // ctx = canvas.getContext('2d');
 
-  //canvas = document.querySelector('#viewport');
-  //ctx = canvas.getContext('2d');
-
-  healthContainer = document.querySelector("#healthContainer");
-  healthBar = document.querySelector("#healthBar");
+  healthContainer = document.querySelector('#healthContainer');
+  healthBar = document.querySelector('#healthBar');
 
   socket = io.connect();
 
-  //Choose a character first
+  // Choose a character first
   socket.emit('getChars');
 
   socket.on('joined', roomSetup);
   socket.on('availableChars', handleChars);
+  socket.on('moveToLobby', handleLobby);
   socket.on('setPlayer', setPlayer);
   socket.on('receiveAttack', receiveAttack);
   socket.on('updatePlayer', updatePlayer);
@@ -410,18 +395,6 @@ var init = function init() {
   socket.on('updateBoss', updateBoss);
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
-
-  var createRoomForm = document.querySelector('#createRoomForm');
-  var sendCreateReq = function sendCreateReq(e) {
-    return joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);
-  };
-  createRoomForm.addEventListener('submit', sendCreateReq);
-
-  var joinRoomForm = document.querySelector('#joinRoomForm');
-  var sendJoinReq = function sendJoinReq(e) {
-    return joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
-  };
-  joinRoomForm.addEventListener('submit', sendJoinReq);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
@@ -545,6 +518,66 @@ var CharSelect = function CharSelect(props) {
 var renderCharacterSelect = function renderCharacterSelect(chars) {
   ReactDOM.render(React.createElement(CharSelect, { characters: chars }), document.querySelector("#main"));
 };
+
+// Handles join/create room button. Only allows users to join rooms only if they're in the lobby.
+var joinRoom = function joinRoom(e, roomName, create) {
+  console.log('join/create req recieved');
+  console.log(room.roomJoined);
+  if (room.roomJoined !== 'lobby') {
+    e.preventDefault();
+    return false;
+  }
+
+  if (create) {
+    socket.emit('createRoom', roomName);
+  } else {
+    socket.emit('joinRoom', roomName);
+  }
+
+  e.preventDefault();
+  return false;
+};
+
+var renderLobby = function renderLobby() {
+  ReactDOM.render(React.createElement(
+    "div",
+    { id: "roomContainer" },
+    React.createElement(
+      "form",
+      { id: "createRoomForm" },
+      React.createElement(
+        "label",
+        { "for": "createRoom" },
+        "Create a Room"
+      ),
+      React.createElement("input", { id: "createRoomField", type: "text", name: "createRoom", maxlength: "4", size: "4" }),
+      React.createElement("input", { type: "submit", value: "Create Room" })
+    ),
+    React.createElement(
+      "form",
+      { id: "joinRoomForm" },
+      React.createElement(
+        "label",
+        { "for": "joinRoom" },
+        "Join a Room"
+      ),
+      React.createElement("input", { id: "joinRoomField", type: "text", name: "joinRoom", maxlength: "4", size: "4" }),
+      React.createElement("input", { type: "submit", value: "Join Room" })
+    )
+  ), document.querySelector("#main"));
+
+  var createRoomForm = document.querySelector('#createRoomForm');
+  var sendCreateReq = function sendCreateReq(e) {
+    return joinRoom(e, createRoomForm.querySelector('#createRoomField').value, true);
+  };
+  createRoomForm.addEventListener('submit', sendCreateReq);
+
+  var joinRoomForm = document.querySelector('#joinRoomForm');
+  var sendJoinReq = function sendJoinReq(e) {
+    return joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
+  };
+  joinRoomForm.addEventListener('submit', sendJoinReq);
+};
 'use strict';
 
 var update = function update() {
@@ -620,6 +653,11 @@ var handleChars = function handleChars(data) {
 
 var chooseCharacter = function chooseCharacter(e) {
   socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
+};
+
+var handleLobby = function handleLobby(data) {
+  room.roomJoined = 'lobby';
+  renderLobby(data);
 };
 
 var setPlayer = function setPlayer(data) {

@@ -73,20 +73,59 @@ const handleLobby = (data) => {
     renderLobby(data);
 };
 
+const aggregateGameInfo = () => {
+  const player = players[hash];
+  let bossDetails = {};
+ 
+  if(boss && boss.alive){
+    bossDetails = {
+      name: boss.name,
+      level: boss.level,
+      exp: boss.exp,
+      gold: boss.gold,
+    };
+  } else {
+    bossDetails = {
+      name: "N/A",
+      level: "N/A",
+      exp: "N/A",
+      gold: "N/A",
+    };
+  }
+  
+  const info = {
+    player: {
+      maxHealth: player.maxHealth,
+      strength: player.strength,
+      defense: player.defense,
+      level: player.level,
+      exp: player.exp,
+      prevLevel: player.prevLevel,
+      nextLevel: player.nextLevel,
+      points: player.pointsToAllocate,
+    },
+    boss: bossDetails,
+  };
+  
+  console.log(info);
+  
+  return info;
+}
 
 const setPlayer = (data) => {
   
-  renderGame(600, 600);
-  
   hash = data.hash;
   players[hash] = data;
-  players[hash].room = room.roomJoined;    
+  players[hash].room = room.roomJoined;
+  
+  
+  renderGame(600, 600, info);
+  const info = aggregateGameInfo();
+  renderGameInfo(info);
 
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);
   }
-
-  console.log(players[hash]);
 };
 
 const sendAttack = () => {
@@ -121,13 +160,32 @@ const updatePlayer = (data) => {
 
   const player = players[data.hash];
 
+  let flagToReRenderInfo = false;
+  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate){
+    flagToReRenderInfo = true;
+  }
+  
+  // Player specific updates
+  player.currentHealth = data.currentHealth;
+  player.maxHealth = data.maxHealth;
+  player.strength = data.strength;
+  player.defense = data.defense;
+  player.level = data.level;
+  player.exp = data.exp;
+  player.prevLevel = data.prevLevel;
+  player.nextLevel = data.nextLevel;
+  player.pointsToAllocate = data.pointsToAllocate;
+  
+  if(flagToReRenderInfo){
+    const info = aggregateGameInfo();
+    renderGameInfo(info);
+  }
+  
+  //Don't update movement or animations if the update is about this player
   if (hash === data.hash) {
-    // Player specific updates
-    player.currentHealth = data.currentHealth;
     return;
   }
   
-  player.currentHealth = data.currentHealth;
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -163,6 +221,8 @@ const disconnect = () => {
 
 const spawnBoss = (data) => {
   boss = data;
+  const info = aggregateGameInfo();
+  renderGameInfo(info);
 };
 
 const updateBoss = (data) => {
@@ -192,4 +252,12 @@ const removeBossAttack = (data) => {
     damageAreas[data.id] = undefined;
     delete damageAreas[data.id];
   }
+};
+
+const bossDeath = () => {
+  boss.anim = boss.ANIMS.death;
+  boss.alive = false;
+  damageAreas = {};
+  const info = aggregateGameInfo();
+  renderGameInfo(info);
 };

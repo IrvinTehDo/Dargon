@@ -1,7 +1,5 @@
 const xxh = require('xxhashjs');
 
-const child = require('child_process');
-
 const classes = require('./classes');
 
 const { Character } = classes;
@@ -36,8 +34,6 @@ instanceHandler.setUpLobby();
 
 let io;
 
-const physics = child.fork('./server/physics');
-
 // Attach custom socket events
 const init = (ioInstance) => {
   io = ioInstance;
@@ -64,7 +60,16 @@ const init = (ioInstance) => {
     socket.on('chooseCharacter', (data) => {
       if (game.validateChar(data.id)) {
         const character = game.getChar(data.id);
-        players[hash] = new Character(character.name, hash, 20, 20);
+        const randX = Math.floor(Math.random() * 400) + 100;
+        const randY = Math.floor(Math.random() * 400) + 100;
+        players[hash] = new Character(
+          character.name, hash, randX, randY,
+          {
+            maxHealth: character.maxHealth,
+            strength: character.strength,
+            defense: character.defense,
+          },
+        );
         // socket.emit('setPlayer', players[hash]);
         socket.emit('moveToLobby');
       }
@@ -74,7 +79,12 @@ const init = (ioInstance) => {
       socket.emit('setPlayer', players[hash]);
 
       if (!game.hasBoss(socket.roomJoined)) {
-        game.spawnBoss(socket.roomJoined, (boss) => {
+        const level = game.calcAggregateLevel(
+          players,
+          instanceHandler.rooms[socket.roomJoined].players,
+        );
+
+        game.spawnBoss(socket.roomJoined, level, (boss) => {
           console.log(`spawned boss in ${socket.roomJoined}`);
           instanceHandler.rooms[socket.roomJoined].enemies[boss.sprite] = boss;
           io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
@@ -99,7 +109,8 @@ const init = (ioInstance) => {
     });
 
     socket.on('sendAttack', (data, roomName) => {
-      instanceHandler.addAttack(roomName, data);
+      const player = players[socket.hash];
+      instanceHandler.addAttack(roomName, data, player);
       console.log(`attack recieved from ${roomName}`);
       // io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
@@ -141,12 +152,6 @@ const init = (ioInstance) => {
       }
     });
 
-    // Placeholder
-    socket.on('collision-check', (data) => {
-      physics.collision.AABB(data.rect1, data.rect2);
-    });
-
-
     // Moved to socket.on('requestCharacterData')
 
     //    if (!game.hasBoss(socket.roomJoined)) {
@@ -168,6 +173,19 @@ const init = (ioInstance) => {
   });
 };
 
+const spawnBoss = (roomId) => {
+  const level = game.calcAggregateLevel(
+    players,
+    instanceHandler.rooms[roomId].players,
+  );
+
+  game.spawnBoss(roomId, level, (boss) => {
+    console.log(`spawned boss in ${roomId}`);
+    instanceHandler.rooms[roomId].enemies[boss.sprite] = boss;
+    io.sockets.in(roomId).emit('spawnBoss', boss);
+  });
+};
+
 const update = () => {
   game.updateBosses((roomId, data) => {
     io.sockets.in(roomId).emit('updateBoss', data);
@@ -183,8 +201,15 @@ const update = () => {
     io.sockets.in(roomId).emit('updatePlayer', player);
   });
 
+  const spawnQueue = game.getSpawnQueue();
+
+  for (let i = 0; i < spawnQueue.length; i++) {
+    spawnBoss(spawnQueue[i]);
+    game.spliceSpawnQueue(i);
+  }
+
   // 'lobby' is temporary, should be replaced with roomName.
-  instanceHandler.processAttacks(io);
+  instanceHandler.processAttacks(players, io);
 
   setTimeout(update, 20);
 };

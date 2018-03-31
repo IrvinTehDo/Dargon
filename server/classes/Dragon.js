@@ -19,6 +19,12 @@ class Dragon {
         speed: 6,
         loop: true,
       },
+      death: {
+        row: 4,
+        frameCount: 1,
+        speed: 200,
+        loop: true,
+      },
     };
 
     this.DIRECTIONS = {
@@ -30,6 +36,7 @@ class Dragon {
 
     this.room = roomId;
     this.sprite = 'dragon';
+    this.name = 'Algor';
 
     this.currentHealth = stats.health;
     this.maxHealth = stats.health;
@@ -38,6 +45,13 @@ class Dragon {
     this.speed = stats.speed;
     this.maxIdleTicks = stats.speed * 60;
     this.attackFreq = stats.speed * 25;
+
+    this.level = stats.level;
+    this.exp = stats.health + (stats.strength * 10) + (stats.defense * 10) + (stats.speed * 10);
+    this.gold = stats.health;
+
+    this.opacity = 1;
+    this.alive = true;
 
     this.x = location.x;
     this.y = location.y;

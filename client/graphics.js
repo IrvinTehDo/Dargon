@@ -94,6 +94,8 @@ const draw = () => {
       }
     }
     
+    ctx.save();
+    ctx.globalAlpha = boss.opacity;
     ctx.drawImage(
       bossImageStruct[boss.sprite],
       boss.width * boss.frame,
@@ -105,8 +107,14 @@ const draw = () => {
       boss.width,
       boss.height
     );
+    ctx.restore();
     
-    drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
+    if(!boss.alive){
+      boss.opacity -= 0.005;
+      boss.opacity = Math.max(0, boss.opacity);
+    } else {
+      drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
+    }
   }
   
 };

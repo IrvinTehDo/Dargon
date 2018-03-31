@@ -29,6 +29,10 @@ const keyDownEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
+  if(!player){
+    return;
+  }
+  
   if (key === 87 || key === 38) {
     player.moveUp = true;
   } else if (key === 83 || key === 40) {
@@ -47,6 +51,10 @@ const keyUpEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
+  if(!player){
+    return;
+  }
+  
   if (key === 87 || key === 38) {
     player.moveUp = false;
   } else if (key === 83 || key === 40) {
@@ -85,6 +93,7 @@ const init = () => {
   socket.on('updateBoss', updateBoss);
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
+  socket.on('bossDeath', bossDeath);
 
 
   document.body.addEventListener('keydown', keyDownEvent);

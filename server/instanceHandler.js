@@ -52,7 +52,7 @@ const roomJoin = (roomName, reqSocket) => {
 };
 
 // Process All attacks in a room.
-const processAttacks = (io) => {
+const processAttacks = (players, io) => {
   const roomKeys = Object.keys(rooms);
   for (let q = 0; q < roomKeys.length; q++) {
     if (roomKeys[q].roomName !== 'lobby') {
@@ -74,7 +74,8 @@ const processAttacks = (io) => {
             if (hit) {
               // Handle damage calculations here
             // game.takeDamage('lobby', 1, io); // temporary call to lobby
-              game.takeDamage(roomKeys[q], 1, io); // 1 damage is temporary
+              const damage = game.calcDamage(rooms[roomKeys[q]].attacks[i].player, enemy);
+              game.takeDamage(roomKeys[q], damage, players, rooms[roomKeys[q]].players, io);
               console.log('hit');
             } else {
               console.log('miss');
@@ -120,8 +121,10 @@ const processAttacks = (io) => {
 //  }
 };
 
-const addAttack = (roomName, attack) => {
+const addAttack = (roomName, attack, player) => {
   console.log('attack added');
+  const att = attack;
+  att.player = player;
   rooms[roomName].attacks.push(attack);
   console.dir(rooms[roomName].attacks);
 };

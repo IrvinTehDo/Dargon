@@ -13,36 +13,94 @@ const getChar = id => charTemplates[id];
 const { Dragon } = classes;
 
 const bosses = {};
+const spawnQueue = [];
 
 const hasBoss = roomId => bosses[roomId] !== undefined;
 
 const getBoss = roomId => bosses[roomId].being;
 
+const getSpawnQueue = () => spawnQueue;
+const spliceSpawnQueue = i => spawnQueue.splice(i, 1);
+
 let prevAttackTime = new Date().getTime();
 
-const takeDamage = (roomId, damage, io) => {
+const calcAggregateLevel = (players, roomHashes) => {
+  let level = 0;
+
+  const playerHashes = Object.keys(roomHashes);
+  for (let i = 0; i < playerHashes.length; i++) {
+    const player = players[playerHashes[i]];
+    level += player.level;
+  }
+
+  return level;
+};
+
+const bossDeath = (roomId, players, playerHashes, io) => {
+  const boss = bosses[roomId].being;
+  const { exp } = boss;
+  const hashes = Object.keys(playerHashes);
+
+  for (let i = 0; i < hashes.length; i++) {
+    const player = players[hashes[i]];
+    player.exp += exp;
+
+    if (player.exp > player.nextLevel) {
+      player.level++;
+      player.pointsToAllocate += 2;
+      player.prevLevel = player.nextLevel;
+      player.nextLevel *= 2.2;
+    }
+
+    io.sockets.in(roomId).emit('updatePlayer', player);
+    io.sockets.in(roomId).emit('bossDeath');
+  }
+
+  delete bosses[roomId];
+
+  setTimeout(() => {
+    spawnQueue.push(roomId);
+    console.log(spawnQueue);
+  }, 5000);
+};
+
+const takeDamage = (roomId, damage, players, playerHashes, io) => {
+  if (!bosses[roomId]) {
+    return;
+  }
+
   bosses[roomId].being.currentHealth -= damage;
   console.log(`${bosses[roomId].being.sprite} takes ${damage} damage. Current health: ${bosses[roomId].being.currentHealth}`);
 
+  io.sockets.in(roomId).emit('updateBoss', { currentHealth: bosses[roomId].being.currentHealth });
+
   // SUPER DUPER TEMPORARY, resets health to 100 if boss hp is at 0.
   if (bosses[roomId].being.currentHealth <= 0) {
-    bosses[roomId].being.currentHealth = 100;
-    console.log('resetting health to 100');
+    // bosses[roomId].being.currentHealth = 100;
+    // console.log('resetting health to 100');
+    bossDeath(roomId, players, playerHashes, io);
   }
-
-  io.sockets.in(roomId).emit('updateBoss', { currentHealth: bosses[roomId].being.currentHealth });
 };
 
-const spawnBoss = (roomId, callback) => {
+const generateBossStats = (lvl) => {
+  const level = lvl;
+  return {
+    level,
+    health: level * 10,
+    strength: level * 2,
+    defense: level,
+    speed: Math.max(1, 6 - (level / 10)),
+  };
+};
+
+const spawnBoss = (roomId, level, callback) => {
   const randX = Math.floor(Math.random() * 200) + 96;
   const randY = Math.floor(Math.random() * 200) + 96;
 
   bosses[roomId] = {
     being: new Dragon(
       { x: randX, y: randY },
-      {
-        strength: 10, defense: 10, health: 100, speed: 4,
-      },
+      generateBossStats(level),
       roomId,
     ),
     targetLoc: undefined,
@@ -181,6 +239,11 @@ const updateBossAttacks = (callback) => {
   }
 };
 
+const calcDamage = (attacker, receiver) => {
+  const damage = attacker.strength - receiver.defense;
+  return Math.max(damage, 1);
+};
+
 const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
   const bossKeys = Object.keys(bosses);
 
@@ -209,7 +272,8 @@ const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
           );
 
           if (hit) {
-            player.currentHealth -= 10;
+            const damage = calcDamage(boss.being, player);
+            player.currentHealth -= damage;
             updatePlayer(room, player);
           }
         }
@@ -225,6 +289,10 @@ const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
 module.exports = {
   hasBoss,
   getBoss,
+  getSpawnQueue,
+  spliceSpawnQueue,
+  calcDamage,
+  calcAggregateLevel,
   takeDamage,
   spawnBoss,
   updateBosses,

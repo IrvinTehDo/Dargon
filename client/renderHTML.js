@@ -23,6 +23,66 @@ const renderGame = (width, height) => {
   ctx = canvas.getContext('2d');
 };
 
+const renderGameInfo = (gameInfo) => {
+  ReactDOM.render(
+    <GameInfo info={gameInfo} />,
+    document.querySelector("#gameInfo")
+  );
+};
+
+const GameInfo = (props) => {
+  
+  const disabled = props.info.player.points === 0;
+  
+  return (
+    <div>
+      <h1>Game Info</h1>
+      <hr />
+      <h2>Player Stats</h2>
+      <p>
+        <span>Character Points: {props.info.player.points}</span>
+      </p>
+      <p>
+        <span>Max Health: {props.info.player.maxHealth} </span> 
+        <button id="increaseHealth" class="levelUpButton" disabled={disabled}>+10 HP</button>
+      </p>
+      <p>
+        <span>Strength: {props.info.player.strength} </span>
+        <button id="increaseStrength" class="levelUpButton" disabled={disabled}>+2 Strength</button>
+      </p>
+      <p>
+        <span>Defense: {props.info.player.defense} </span>
+        <button id="increaseDefense" class="levelUpButton" disabled={disabled}>+2 Defense</button>
+      </p>
+      <p>
+        <span>Level: {props.info.player.level}</span>
+        <meter 
+          value={props.info.player.exp} 
+          min={props.info.player.prevLevel}
+          max={props.info.player.nextLevel}
+        >
+          <span>Exp: {props.info.player.exp} / {props.info.player.nextLevel}</span>
+        </meter>
+      </p>
+      
+      <hr />
+      <h2>Boss Bounty</h2>
+      <p>
+        <span>Boss: {props.info.boss.name}</span>
+      </p>
+      <p>
+        <span>Boss Level: {props.info.boss.level}</span>
+      </p>
+      <p>
+        <span>Exp Reward: {props.info.boss.exp}</span>
+      </p>
+      <p>
+        <span>Gold Reward: {props.info.boss.gold}</span>
+      </p>
+    </div>
+  );
+}
+
 const CharSelect = (props) => {
   
   //Map the characters object into an array

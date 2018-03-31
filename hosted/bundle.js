@@ -227,9 +227,17 @@ var draw = function draw() {
       }
     }
 
+    ctx.save();
+    ctx.globalAlpha = boss.opacity;
     ctx.drawImage(bossImageStruct[boss.sprite], boss.width * boss.frame, boss.height * (boss.anim.row + boss.direction), boss.width, boss.height, boss.x - boss.width / 2, boss.y - boss.height / 2, boss.width, boss.height);
+    ctx.restore();
 
-    drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
+    if (!boss.alive) {
+      boss.opacity -= 0.005;
+      boss.opacity = Math.max(0, boss.opacity);
+    } else {
+      drawHealthBar(boss.x, boss.y, boss.currentHealth, boss.maxHealth);
+    }
   }
 };
 
@@ -341,6 +349,10 @@ var keyDownEvent = function keyDownEvent(e) {
   var key = e.which;
   var player = players[hash];
 
+  if (!player) {
+    return;
+  }
+
   if (key === 87 || key === 38) {
     player.moveUp = true;
   } else if (key === 83 || key === 40) {
@@ -358,6 +370,10 @@ var keyDownEvent = function keyDownEvent(e) {
 var keyUpEvent = function keyUpEvent(e) {
   var key = e.which;
   var player = players[hash];
+
+  if (!player) {
+    return;
+  }
 
   if (key === 87 || key === 38) {
     player.moveUp = false;
@@ -397,6 +413,7 @@ var init = function init() {
   socket.on('updateBoss', updateBoss);
   socket.on('updateBossAttack', updateBossAttack);
   socket.on('removeBossAttack', removeBossAttack);
+  socket.on('bossDeath', bossDeath);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
@@ -423,6 +440,161 @@ var renderGame = function renderGame(width, height) {
 
   canvas = document.querySelector('#viewport');
   ctx = canvas.getContext('2d');
+};
+
+var renderGameInfo = function renderGameInfo(gameInfo) {
+  ReactDOM.render(React.createElement(GameInfo, { info: gameInfo }), document.querySelector("#gameInfo"));
+};
+
+var GameInfo = function GameInfo(props) {
+
+  var disabled = props.info.player.points === 0;
+
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(
+      "h1",
+      null,
+      "Game Info"
+    ),
+    React.createElement("hr", null),
+    React.createElement(
+      "h2",
+      null,
+      "Player Stats"
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Character Points: ",
+        props.info.player.points
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Max Health: ",
+        props.info.player.maxHealth,
+        " "
+      ),
+      React.createElement(
+        "button",
+        { id: "increaseHealth", "class": "levelUpButton", disabled: disabled },
+        "+10 HP"
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Strength: ",
+        props.info.player.strength,
+        " "
+      ),
+      React.createElement(
+        "button",
+        { id: "increaseStrength", "class": "levelUpButton", disabled: disabled },
+        "+2 Strength"
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Defense: ",
+        props.info.player.defense,
+        " "
+      ),
+      React.createElement(
+        "button",
+        { id: "increaseDefense", "class": "levelUpButton", disabled: disabled },
+        "+2 Defense"
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Level: ",
+        props.info.player.level
+      ),
+      React.createElement(
+        "meter",
+        {
+          value: props.info.player.exp,
+          min: props.info.player.prevLevel,
+          max: props.info.player.nextLevel
+        },
+        React.createElement(
+          "span",
+          null,
+          "Exp: ",
+          props.info.player.exp,
+          " / ",
+          props.info.player.nextLevel
+        )
+      )
+    ),
+    React.createElement("hr", null),
+    React.createElement(
+      "h2",
+      null,
+      "Boss Bounty"
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Boss: ",
+        props.info.boss.name
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Boss Level: ",
+        props.info.boss.level
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Exp Reward: ",
+        props.info.boss.exp
+      )
+    ),
+    React.createElement(
+      "p",
+      null,
+      React.createElement(
+        "span",
+        null,
+        "Gold Reward: ",
+        props.info.boss.gold
+      )
+    )
+  );
 };
 
 var CharSelect = function CharSelect(props) {
@@ -662,19 +834,58 @@ var handleLobby = function handleLobby(data) {
   renderLobby(data);
 };
 
-var setPlayer = function setPlayer(data) {
+var aggregateGameInfo = function aggregateGameInfo() {
+  var player = players[hash];
+  var bossDetails = {};
 
-  renderGame(600, 600);
+  if (boss && boss.alive) {
+    bossDetails = {
+      name: boss.name,
+      level: boss.level,
+      exp: boss.exp,
+      gold: boss.gold
+    };
+  } else {
+    bossDetails = {
+      name: "N/A",
+      level: "N/A",
+      exp: "N/A",
+      gold: "N/A"
+    };
+  }
+
+  var info = {
+    player: {
+      maxHealth: player.maxHealth,
+      strength: player.strength,
+      defense: player.defense,
+      level: player.level,
+      exp: player.exp,
+      prevLevel: player.prevLevel,
+      nextLevel: player.nextLevel,
+      points: player.pointsToAllocate
+    },
+    boss: bossDetails
+  };
+
+  console.log(info);
+
+  return info;
+};
+
+var setPlayer = function setPlayer(data) {
 
   hash = data.hash;
   players[hash] = data;
   players[hash].room = room.roomJoined;
 
+  renderGame(600, 600, info);
+  var info = aggregateGameInfo();
+  renderGameInfo(info);
+
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);
   }
-
-  console.log(players[hash]);
 };
 
 var sendAttack = function sendAttack() {
@@ -709,13 +920,32 @@ var updatePlayer = function updatePlayer(data) {
 
   var player = players[data.hash];
 
+  var flagToReRenderInfo = false;
+  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate) {
+    flagToReRenderInfo = true;
+  }
+
+  // Player specific updates
+  player.currentHealth = data.currentHealth;
+  player.maxHealth = data.maxHealth;
+  player.strength = data.strength;
+  player.defense = data.defense;
+  player.level = data.level;
+  player.exp = data.exp;
+  player.prevLevel = data.prevLevel;
+  player.nextLevel = data.nextLevel;
+  player.pointsToAllocate = data.pointsToAllocate;
+
+  if (flagToReRenderInfo) {
+    var info = aggregateGameInfo();
+    renderGameInfo(info);
+  }
+
+  //Don't update movement or animations if the update is about this player
   if (hash === data.hash) {
-    // Player specific updates
-    player.currentHealth = data.currentHealth;
     return;
   }
 
-  player.currentHealth = data.currentHealth;
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -751,6 +981,8 @@ var disconnect = function disconnect() {
 
 var spawnBoss = function spawnBoss(data) {
   boss = data;
+  var info = aggregateGameInfo();
+  renderGameInfo(info);
 };
 
 var updateBoss = function updateBoss(data) {
@@ -780,4 +1012,12 @@ var removeBossAttack = function removeBossAttack(data) {
     damageAreas[data.id] = undefined;
     delete damageAreas[data.id];
   }
+};
+
+var bossDeath = function bossDeath() {
+  boss.anim = boss.ANIMS.death;
+  boss.alive = false;
+  damageAreas = {};
+  var info = aggregateGameInfo();
+  renderGameInfo(info);
 };

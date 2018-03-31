@@ -1,5 +1,5 @@
 class Character {
-  constructor(name, hash, x, y) {
+  constructor(name, hash, x, y, stats) {
     this.ANIMS = {
       meditate: {
         row: 0,
@@ -52,8 +52,15 @@ class Character {
       right: 3,
     };
 
-    this.currentHealth = 100;
-    this.maxHealth = 100;
+    this.currentHealth = stats.maxHealth;
+    this.maxHealth = stats.maxHealth;
+    this.strength = stats.strength;
+    this.defense = stats.defense;
+    this.level = 1;
+    this.exp = 0;
+    this.prevLevel = 0;
+    this.nextLevel = 200;
+    this.pointsToAllocate = 0;
 
     this.name = name;
     this.hash = hash;

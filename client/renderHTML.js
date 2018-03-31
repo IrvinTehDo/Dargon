@@ -44,24 +44,23 @@ const GameInfo = (props) => {
       </p>
       <p>
         <span>Max Health: {props.info.player.maxHealth} </span> 
-        <button id="increaseHealth" class="levelUpButton" disabled={disabled}>+10 HP</button>
+        <button id="increaseHealth" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+10 HP</button>
       </p>
       <p>
         <span>Strength: {props.info.player.strength} </span>
-        <button id="increaseStrength" class="levelUpButton" disabled={disabled}>+2 Strength</button>
+        <button id="increaseStrength" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+1 Strength</button>
       </p>
       <p>
         <span>Defense: {props.info.player.defense} </span>
-        <button id="increaseDefense" class="levelUpButton" disabled={disabled}>+2 Defense</button>
+        <button id="increaseDefense" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+2 Defense</button>
       </p>
       <p>
-        <span>Level: {props.info.player.level}</span>
+        <span>Level: {props.info.player.level} (Exp: {props.info.player.exp} / {props.info.player.nextLevel}) </span>
         <meter 
           value={props.info.player.exp} 
           min={props.info.player.prevLevel}
           max={props.info.player.nextLevel}
         >
-          <span>Exp: {props.info.player.exp} / {props.info.player.nextLevel}</span>
         </meter>
       </p>
       

@@ -261,3 +261,18 @@ const bossDeath = () => {
   const info = aggregateGameInfo();
   renderGameInfo(info);
 };
+
+const upgradeChar = (e) => {
+  const id = e.target.getAttribute("id");
+  switch(id){
+    case "increaseHealth":
+      socket.emit('characterUpgrade', {upgrade: 'health'});
+      break;
+    case "increaseStrength":
+      socket.emit('characterUpgrade', {upgrade: 'strength'});
+      break;
+    case "increaseDefense":
+      socket.emit('characterUpgrade', {upgrade: 'defense'});
+      break;
+  }
+};

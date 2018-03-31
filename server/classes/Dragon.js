@@ -44,10 +44,13 @@ class Dragon {
     this.defense = stats.defense;
     this.speed = stats.speed;
     this.maxIdleTicks = stats.speed * 60;
-    this.attackFreq = stats.speed * 25;
+    this.attackFreq = stats.attackSpeed * 25;
 
     this.level = stats.level;
-    this.exp = stats.health + (stats.strength * 10) + (stats.defense * 10) + (stats.speed * 10);
+    this.exp = (stats.health * 2)
+    + (stats.strength * 30)
+    + (stats.defense * 20)
+    + (stats.speed * 20);
     this.gold = stats.health;
 
     this.opacity = 1;

@@ -121,6 +121,10 @@ var DamageArea = function () {
       text: "Stay Away",
       textOffset: 0,
       speed: 2
+    }, {
+      text: "Binding Agreement",
+      textOffset: 0,
+      speed: -1
     }];
   }
 
@@ -486,7 +490,7 @@ var GameInfo = function GameInfo(props) {
       ),
       React.createElement(
         "button",
-        { id: "increaseHealth", "class": "levelUpButton", disabled: disabled },
+        { id: "increaseHealth", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
         "+10 HP"
       )
     ),
@@ -502,8 +506,8 @@ var GameInfo = function GameInfo(props) {
       ),
       React.createElement(
         "button",
-        { id: "increaseStrength", "class": "levelUpButton", disabled: disabled },
-        "+2 Strength"
+        { id: "increaseStrength", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+        "+1 Strength"
       )
     ),
     React.createElement(
@@ -518,7 +522,7 @@ var GameInfo = function GameInfo(props) {
       ),
       React.createElement(
         "button",
-        { id: "increaseDefense", "class": "levelUpButton", disabled: disabled },
+        { id: "increaseDefense", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
         "+2 Defense"
       )
     ),
@@ -529,24 +533,18 @@ var GameInfo = function GameInfo(props) {
         "span",
         null,
         "Level: ",
-        props.info.player.level
+        props.info.player.level,
+        " (Exp: ",
+        props.info.player.exp,
+        " / ",
+        props.info.player.nextLevel,
+        ") "
       ),
-      React.createElement(
-        "meter",
-        {
-          value: props.info.player.exp,
-          min: props.info.player.prevLevel,
-          max: props.info.player.nextLevel
-        },
-        React.createElement(
-          "span",
-          null,
-          "Exp: ",
-          props.info.player.exp,
-          " / ",
-          props.info.player.nextLevel
-        )
-      )
+      React.createElement("meter", {
+        value: props.info.player.exp,
+        min: props.info.player.prevLevel,
+        max: props.info.player.nextLevel
+      })
     ),
     React.createElement("hr", null),
     React.createElement(
@@ -1020,4 +1018,19 @@ var bossDeath = function bossDeath() {
   damageAreas = {};
   var info = aggregateGameInfo();
   renderGameInfo(info);
+};
+
+var upgradeChar = function upgradeChar(e) {
+  var id = e.target.getAttribute("id");
+  switch (id) {
+    case "increaseHealth":
+      socket.emit('characterUpgrade', { upgrade: 'health' });
+      break;
+    case "increaseStrength":
+      socket.emit('characterUpgrade', { upgrade: 'strength' });
+      break;
+    case "increaseDefense":
+      socket.emit('characterUpgrade', { upgrade: 'defense' });
+      break;
+  }
 };

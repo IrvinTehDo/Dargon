@@ -31,6 +31,11 @@ class DamageArea {
         text: "Stay Away",
         textOffset: 0,
         speed: 2,
+      },
+      {
+        text: "Binding Agreement",
+        textOffset: 0,
+        speed: -1,
       }
     ];
   };

@@ -49,7 +49,7 @@ const bossDeath = (roomId, players, playerHashes, io) => {
       player.level++;
       player.pointsToAllocate += 2;
       player.prevLevel = player.nextLevel;
-      player.nextLevel *= 2.2;
+      player.nextLevel = Math.floor(player.nextLevel * 2.2);
     }
 
     io.sockets.in(roomId).emit('updatePlayer', player);
@@ -89,7 +89,8 @@ const generateBossStats = (lvl) => {
     health: level * 10,
     strength: level * 2,
     defense: level,
-    speed: Math.max(1, 6 - (level / 10)),
+    speed: Math.min(level / 2, 10),
+    attackSpeed: Math.max(1, 6 - (level / 10)),
   };
 };
 
@@ -286,6 +287,28 @@ const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
   }
 };
 
+const upgradePlayer = (p, upgrade, callback) => {
+  const player = p;
+  switch (upgrade) {
+    case 'health':
+      player.currentHealth += 10;
+      player.maxHealth += 10;
+      break;
+    case 'strength':
+      player.strength += 1;
+      break;
+    case 'defense':
+      player.defense += 2;
+      break;
+    default:
+      player.currentHealth += 10;
+      player.maxHealth += 10;
+      break;
+  }
+
+  callback(player);
+};
+
 module.exports = {
   hasBoss,
   getBoss,
@@ -301,4 +324,5 @@ module.exports = {
   getAvailableChars,
   validateChar,
   getChar,
+  upgradePlayer,
 };

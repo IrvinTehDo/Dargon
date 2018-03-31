@@ -115,6 +115,17 @@ const init = (ioInstance) => {
       // io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
     });
 
+    socket.on('characterUpgrade', (data) => {
+      const player = players[socket.hash];
+
+      if (player.pointsToAllocate > 0) {
+        player.pointsToAllocate--;
+        game.upgradePlayer(player, data.upgrade, (p) => {
+          io.sockets.in(socket.roomJoined).emit('updatePlayer', p);
+        });
+      }
+    });
+
     // socket.on('custom-event', (data) => {});
 
     // create and join
@@ -146,6 +157,15 @@ const init = (ioInstance) => {
         }
         socket.roomJoined = roomName;
         // To Do: Remove player/socket from other instance/room and move them to the new one.
+
+        // When a player joins, immediately put them on the screen
+        // io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
+
+        // Update the new player with all existing players
+        /* const playersInRoom = Object.keys(instanceHandler.rooms[socket.roomJoined]);
+        for(let i = 0; i < playersInRoom.length; i++){
+          socket.emit('updatePlayer', players[playersInRoom[i]]);
+        } */
 
         socket.emit('joined', roomName);
         console.log('joined room');

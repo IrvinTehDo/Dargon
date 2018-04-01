@@ -31,7 +31,7 @@ class Character {
         speed: 5,
         loop: false,
       },
-      die: {
+      death: {
         row: 20,
         frameCount: 6,
         speed: 10,
@@ -52,6 +52,7 @@ class Character {
       right: 3,
     };
 
+    this.alive = true;
     this.currentHealth = stats.maxHealth;
     this.maxHealth = stats.maxHealth;
     this.strength = stats.strength;

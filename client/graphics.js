@@ -52,6 +52,13 @@ const draw = () => {
         switchAnimation(player, "meditate");
       }
     }
+    
+    if(!player.alive){
+      if(player.anim.row !== 20){
+        switchAnimation(player, 'death');
+        player.direction = player.DIRECTIONS.up;
+      }
+    }
 
     if (characterImageStruct[player.name]) {
       if (player.attacking) {
@@ -80,7 +87,9 @@ const draw = () => {
         );
       }
       
-      drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
+      if(player.alive){
+        drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
+      }
     }
 
     ctx.restore();

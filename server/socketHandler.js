@@ -74,6 +74,24 @@ const init = (ioInstance) => {
         socket.emit('moveToLobby');
       }
     });
+    
+    socket.on('respawnRequest', () => {
+      const player = players[socket.hash];
+      const character = game.getChar(player.name);
+      const randX = Math.floor(Math.random() * 400) + 100;
+      const randY = Math.floor(Math.random() * 400) + 100;
+      players[hash] = new Character(
+        character.name, hash, randX, randY,
+        {
+          maxHealth: character.maxHealth,
+          strength: character.strength,
+          defense: character.defense,
+        },
+      );
+      
+      players[hash].lastUpdate = new Date().getTime();
+      io.sockets.in(socket.roomJoined).emit('updatePlayer', players[hash]);
+    });
 
     socket.on('requestCharacterData', () => {
       socket.emit('setPlayer', players[hash]);
@@ -99,6 +117,10 @@ const init = (ioInstance) => {
       // Should change to a setter that validates data and moves to the existing class!
       const player = players[socket.hash];
 
+      if(!player.alive){
+        return;
+      }
+      
       for (let i = 0; i < playerAttributesToCopy.length; i++) {
         const key = playerAttributesToCopy[i];
         player[key] = data[key];
@@ -110,6 +132,11 @@ const init = (ioInstance) => {
 
     socket.on('sendAttack', (data, roomName) => {
       const player = players[socket.hash];
+      
+      if(!player.alive){
+        return;
+      }
+      
       instanceHandler.addAttack(roomName, data, player);
       console.log(`attack recieved from ${roomName}`);
       // io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
@@ -118,9 +145,15 @@ const init = (ioInstance) => {
     socket.on('characterUpgrade', (data) => {
       const player = players[socket.hash];
 
+      if(!player.alive){
+        return;
+      }
+      
       if (player.pointsToAllocate > 0) {
         player.pointsToAllocate--;
         game.upgradePlayer(player, data.upgrade, (p) => {
+          const player = p;
+          player.lastUpdate = new Date().getTime();
           io.sockets.in(socket.roomJoined).emit('updatePlayer', p);
         });
       }
@@ -129,6 +162,10 @@ const init = (ioInstance) => {
     socket.on('collectGem', () => {
       const player = players[socket.hash];
 
+      if(!player.alive){
+        return;
+      }
+      
       if (player.gemsToCollect > 0) {
         player.gemsToCollect--;
         player.gems++;
@@ -195,6 +232,10 @@ const init = (ioInstance) => {
     //    }
 
     socket.on('disconnect', () => {
+      if(!players[socket.hash]){
+        return;
+      }
+      
       io.sockets.in(socket.roomJoined).emit('deletePlayer', players[socket.hash]);
       delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
       players[socket.hash] = undefined;
@@ -228,7 +269,9 @@ const update = () => {
 
   game.resolveBossAttacks(players, instanceHandler.rooms, (roomId, data) => {
     io.sockets.in(roomId).emit('removeBossAttack', data);
-  }, (roomId, player) => {
+  }, (roomId, p) => {
+    const player = p;
+    player.lastUpdate = new Date().getTime() + 1000;
     io.sockets.in(roomId).emit('updatePlayer', player);
   });
 

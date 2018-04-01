@@ -29,7 +29,7 @@ const keyDownEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
-  if(!player){
+  if(!player || !player.alive){
     return;
   }
   
@@ -51,7 +51,7 @@ const keyUpEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
-  if(!player){
+  if(!player || !player.alive){
     return;
   }
   

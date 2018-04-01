@@ -47,11 +47,12 @@ const bossDeath = (roomId, players, playerHashes, io) => {
     player.exp += exp;
     player.gemsToCollect = gems;
 
-    if (player.exp > player.nextLevel) {
+    if (player.exp >= player.nextLevel) {
       player.level++;
       player.pointsToAllocate += 2;
       player.prevLevel = player.nextLevel;
       player.nextLevel = Math.floor(player.nextLevel * 2.2);
+      player.currentHealth = player.maxHealth;
     }
 
     io.sockets.in(roomId).emit('updatePlayer', player);
@@ -275,9 +276,14 @@ const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
             },
           );
 
-          if (hit) {
+          if (hit && player.alive) {
             const damage = calcDamage(boss.being, player);
             player.currentHealth -= damage;
+            
+            if(player.currentHealth <= 0){
+              player.alive = false;
+            }
+            
             updatePlayer(room, player);
           }
         }

@@ -9,6 +9,21 @@ const update = () => {
 const updateLocalPosition = () => {
   const player = players[hash];
 
+  if(!player.alive){
+    
+    if(player.anim.row !== 20){
+      switchAnimation(player, 'death');
+    }
+    
+    player.moveUp = false;
+    player.moveDown = false;
+    player.moveLeft = false;
+    player.moveRight = false;
+    player.attacking = false;
+    player.direction = player.DIRECTIONS.up;
+    return;
+  }
+  
   player.prevX = player.x;
   player.prevY = player.y;
 
@@ -104,6 +119,7 @@ const aggregateGameInfo = () => {
       prevLevel: player.prevLevel,
       nextLevel: player.nextLevel,
       points: player.pointsToAllocate,
+      alive: player.alive,
     },
     boss: bossDetails,
   };
@@ -160,7 +176,11 @@ const updatePlayer = (data) => {
   const player = players[data.hash];
 
   let flagToReRenderInfo = false;
-  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems){
+  if(player.exp != data.exp 
+    || player.pointsToAllocate != data.pointsToAllocate 
+    || player.gems != data.gems
+    || player.alive != data.alive
+  ){
     flagToReRenderInfo = true;
   }
   
@@ -175,6 +195,7 @@ const updatePlayer = (data) => {
   player.nextLevel = data.nextLevel;
   player.pointsToAllocate = data.pointsToAllocate;
   player.gems = data.gems;
+  player.alive = data.alive;
   
   if(flagToReRenderInfo){
     const info = aggregateGameInfo();
@@ -308,3 +329,7 @@ const dispenseGems = (data) => {
 const collectGem = () => {
   socket.emit('collectGem');
 };
+
+const respawnRequest = () => {
+  socket.emit('respawnRequest');
+}

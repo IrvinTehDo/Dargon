@@ -210,6 +210,13 @@ var draw = function draw() {
       }
     }
 
+    if (!player.alive) {
+      if (player.anim.row !== 20) {
+        switchAnimation(player, 'death');
+        player.direction = player.DIRECTIONS.up;
+      }
+    }
+
     if (characterImageStruct[player.name]) {
       if (player.attacking) {
         ctx.drawImage(characterImageStruct[player.name], player.attWidth * player.frame, player.anim.row * player.height + player.direction * player.attHeight, player.attWidth, player.attHeight, player.x - player.attWidth / 2, player.y - player.attHeight / 2, player.attWidth, player.attHeight);
@@ -217,7 +224,9 @@ var draw = function draw() {
         ctx.drawImage(characterImageStruct[player.name], player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
       }
 
-      drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
+      if (player.alive) {
+        drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
+      }
     }
 
     ctx.restore();
@@ -416,7 +425,7 @@ var keyDownEvent = function keyDownEvent(e) {
   var key = e.which;
   var player = players[hash];
 
-  if (!player) {
+  if (!player || !player.alive) {
     return;
   }
 
@@ -438,7 +447,7 @@ var keyUpEvent = function keyUpEvent(e) {
   var key = e.which;
   var player = players[hash];
 
-  if (!player) {
+  if (!player || !player.alive) {
     return;
   }
 
@@ -534,93 +543,102 @@ var GameInfo = function GameInfo(props) {
       null,
       "Player Stats"
     ),
-    React.createElement(
-      "p",
+    props.info.player.alive && React.createElement(
+      "div",
       null,
       React.createElement(
-        "span",
+        "p",
         null,
-        "Score (Gems): ",
-        props.info.player.gems
-      )
-    ),
-    React.createElement(
-      "p",
-      null,
-      React.createElement(
-        "span",
-        null,
-        "Character Points: ",
-        props.info.player.points
-      )
-    ),
-    React.createElement(
-      "p",
-      null,
-      React.createElement(
-        "span",
-        null,
-        "Max Health: ",
-        props.info.player.maxHealth,
-        " "
+        React.createElement(
+          "span",
+          null,
+          "Score (Gems): ",
+          props.info.player.gems
+        )
       ),
       React.createElement(
-        "button",
-        { id: "increaseHealth", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
-        "+10 HP"
-      )
-    ),
-    React.createElement(
-      "p",
-      null,
-      React.createElement(
-        "span",
+        "p",
         null,
-        "Strength: ",
-        props.info.player.strength,
-        " "
+        React.createElement(
+          "span",
+          null,
+          "Character Points: ",
+          props.info.player.points
+        )
       ),
       React.createElement(
-        "button",
-        { id: "increaseStrength", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
-        "+1 Strength"
-      )
-    ),
-    React.createElement(
-      "p",
-      null,
-      React.createElement(
-        "span",
+        "p",
         null,
-        "Defense: ",
-        props.info.player.defense,
-        " "
+        React.createElement(
+          "span",
+          null,
+          "Max Health: ",
+          props.info.player.maxHealth,
+          " "
+        ),
+        React.createElement(
+          "button",
+          { id: "increaseHealth", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          "+10 HP"
+        )
       ),
       React.createElement(
-        "button",
-        { id: "increaseDefense", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
-        "+2 Defense"
+        "p",
+        null,
+        React.createElement(
+          "span",
+          null,
+          "Strength: ",
+          props.info.player.strength,
+          " "
+        ),
+        React.createElement(
+          "button",
+          { id: "increaseStrength", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          "+1 Strength"
+        )
+      ),
+      React.createElement(
+        "p",
+        null,
+        React.createElement(
+          "span",
+          null,
+          "Defense: ",
+          props.info.player.defense,
+          " "
+        ),
+        React.createElement(
+          "button",
+          { id: "increaseDefense", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          "+2 Defense"
+        )
+      ),
+      React.createElement(
+        "p",
+        null,
+        React.createElement(
+          "span",
+          null,
+          "Level: ",
+          props.info.player.level,
+          " (Exp: ",
+          props.info.player.exp,
+          " / ",
+          props.info.player.nextLevel,
+          ") "
+        ),
+        React.createElement("meter", {
+          value: props.info.player.exp,
+          min: props.info.player.prevLevel,
+          max: props.info.player.nextLevel
+        })
       )
     ),
-    React.createElement(
-      "p",
-      null,
-      React.createElement(
-        "span",
-        null,
-        "Level: ",
-        props.info.player.level,
-        " (Exp: ",
-        props.info.player.exp,
-        " / ",
-        props.info.player.nextLevel,
-        ") "
-      ),
-      React.createElement("meter", {
-        value: props.info.player.exp,
-        min: props.info.player.prevLevel,
-        max: props.info.player.nextLevel
-      })
+    !props.info.player.alive && React.createElement(
+      "button",
+      { id: "respawnButton", onClick: respawnRequest },
+      "Respawn"
     ),
     React.createElement("hr", null),
     React.createElement(
@@ -731,12 +749,6 @@ var CharSelect = function CharSelect(props) {
         React.createElement(
           "p",
           null,
-          "Speed: ",
-          character.speed
-        ),
-        React.createElement(
-          "p",
-          null,
           "Health: ",
           character.maxHealth
         )
@@ -839,6 +851,21 @@ var update = function update() {
 var updateLocalPosition = function updateLocalPosition() {
   var player = players[hash];
 
+  if (!player.alive) {
+
+    if (player.anim.row !== 20) {
+      switchAnimation(player, 'death');
+    }
+
+    player.moveUp = false;
+    player.moveDown = false;
+    player.moveLeft = false;
+    player.moveRight = false;
+    player.attacking = false;
+    player.direction = player.DIRECTIONS.up;
+    return;
+  }
+
   player.prevX = player.x;
   player.prevY = player.y;
 
@@ -938,7 +965,8 @@ var aggregateGameInfo = function aggregateGameInfo() {
       gems: player.gems,
       prevLevel: player.prevLevel,
       nextLevel: player.nextLevel,
-      points: player.pointsToAllocate
+      points: player.pointsToAllocate,
+      alive: player.alive
     },
     boss: bossDetails
   };
@@ -994,7 +1022,7 @@ var updatePlayer = function updatePlayer(data) {
   var player = players[data.hash];
 
   var flagToReRenderInfo = false;
-  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems) {
+  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems || player.alive != data.alive) {
     flagToReRenderInfo = true;
   }
 
@@ -1009,6 +1037,7 @@ var updatePlayer = function updatePlayer(data) {
   player.nextLevel = data.nextLevel;
   player.pointsToAllocate = data.pointsToAllocate;
   player.gems = data.gems;
+  player.alive = data.alive;
 
   if (flagToReRenderInfo) {
     var info = aggregateGameInfo();
@@ -1141,4 +1170,8 @@ var dispenseGems = function dispenseGems(data) {
 
 var collectGem = function collectGem() {
   socket.emit('collectGem');
+};
+
+var respawnRequest = function respawnRequest() {
+  socket.emit('respawnRequest');
 };

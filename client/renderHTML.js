@@ -39,33 +39,41 @@ const GameInfo = (props) => {
       <h1>Game Info</h1>
       <hr />
       <h2>Player Stats</h2>
-      <p>
-        <span>Score (Gems): {props.info.player.gems}</span>
-      </p>
-      <p>
-        <span>Character Points: {props.info.player.points}</span>
-      </p>
-      <p>
-        <span>Max Health: {props.info.player.maxHealth} </span> 
-        <button id="increaseHealth" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+10 HP</button>
-      </p>
-      <p>
-        <span>Strength: {props.info.player.strength} </span>
-        <button id="increaseStrength" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+1 Strength</button>
-      </p>
-      <p>
-        <span>Defense: {props.info.player.defense} </span>
-        <button id="increaseDefense" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+2 Defense</button>
-      </p>
-      <p>
-        <span>Level: {props.info.player.level} (Exp: {props.info.player.exp} / {props.info.player.nextLevel}) </span>
-        <meter 
-          value={props.info.player.exp} 
-          min={props.info.player.prevLevel}
-          max={props.info.player.nextLevel}
-        >
-        </meter>
-      </p>
+      {props.info.player.alive &&
+        <div>
+          <p>
+            <span>Score (Gems): {props.info.player.gems}</span>
+          </p>
+          <p>
+            <span>Character Points: {props.info.player.points}</span>
+          </p>
+          <p>
+            <span>Max Health: {props.info.player.maxHealth} </span> 
+            <button id="increaseHealth" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+10 HP</button>
+          </p>
+          <p>
+            <span>Strength: {props.info.player.strength} </span>
+            <button id="increaseStrength" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+1 Strength</button>
+          </p>
+          <p>
+            <span>Defense: {props.info.player.defense} </span>
+            <button id="increaseDefense" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+2 Defense</button>
+          </p>
+          <p>
+            <span>Level: {props.info.player.level} (Exp: {props.info.player.exp} / {props.info.player.nextLevel}) </span>
+            <meter 
+              value={props.info.player.exp} 
+              min={props.info.player.prevLevel}
+              max={props.info.player.nextLevel}
+            >
+            </meter>
+          </p>
+        </div>
+      }
+      
+      {!props.info.player.alive &&
+        <button id="respawnButton" onClick={respawnRequest}>Respawn</button>
+      }
       
       <hr />
       <h2>Boss Bounty</h2>
@@ -115,7 +123,6 @@ const CharSelect = (props) => {
           <h3>Stats</h3>
           <p>Strength: {character.strength}</p>
           <p>Defense: {character.defense}</p>
-          <p>Speed: {character.speed}</p>
           <p>Health: {character.maxHealth}</p>
         </div>
         <hr />

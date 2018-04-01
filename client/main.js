@@ -42,7 +42,7 @@ const keyDownEvent = (e) => {
     player.moveLeft = true;
   } else if (key === 68 || key === 39) {
     player.moveRight = true;
-  } else if (key === 32 && !player.attacking) {
+  } else if ((key === 32 || key === 74) && !player.attacking) {
     player.attacking = true;
     sendAttack();
   }
@@ -106,7 +106,6 @@ const init = () => {
   socket.on('updateQueue', updateQueue);
   socket.on('requestToJoin', requestToJoinRoom);
   socket.on('getOpenRoomList', renderAvailableRooms);    
-
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);

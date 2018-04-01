@@ -437,7 +437,7 @@ var keyDownEvent = function keyDownEvent(e) {
     player.moveLeft = true;
   } else if (key === 68 || key === 39) {
     player.moveRight = true;
-  } else if (key === 32 && !player.attacking) {
+  } else if ((key === 32 || key === 74) && !player.attacking) {
     player.attacking = true;
     sendAttack();
   }
@@ -513,11 +513,39 @@ window.onload = init;
 var GameWindow = function GameWindow(props) {
   return React.createElement(
     "div",
-    null,
-    React.createElement("iframe", { width: "560", height: "315",
-      src: "http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q",
-      frameBorder: "0", allow: "autoplay; encrypted-media", id: "videoFrame" }),
-    React.createElement("canvas", { id: "viewport", width: props.width, height: props.height })
+    { "class": "container-fluid" },
+    React.createElement(
+      "div",
+      { "class": "row row-centered" },
+      React.createElement("div", { id: "gameInfo", "class": "col-xl-4 col-centered" }),
+      React.createElement(
+        "div",
+        { id: "viewport-parent", "class": "col-xl-4 col-centered" },
+        React.createElement("canvas", { id: "viewport", width: props.width, height: props.height }),
+        React.createElement(
+          "p",
+          null,
+          "Controls: WASD or Arrow Keys to Move, Space bar or J to attack"
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Avoid: Red rectangles, will damage when completely red"
+        ),
+        React.createElement(
+          "p",
+          null,
+          "Gather: Gems on boss death (score)"
+        )
+      ),
+      React.createElement(
+        "div",
+        { "class": "col-xl-4 col-centered" },
+        React.createElement("iframe", { width: "560", height: "315",
+          src: "http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q",
+          frameBorder: "0", allow: "autoplay; encrypted-media", id: "videoFrame" })
+      )
+    )
   );
 };
 
@@ -536,6 +564,12 @@ var renderGameInfo = function renderGameInfo(gameInfo) {
 var GameInfo = function GameInfo(props) {
 
   var disabled = props.info.player.points === 0;
+  var expBetweenLevels = props.info.player.nextLevel - props.info.player.prevLevel;
+  var expRatio = Math.floor((props.info.player.exp - props.info.player.prevLevel) / expBetweenLevels * 100);
+  var ratioString = expRatio + "%";
+  var style = {
+    width: ratioString
+  };
 
   return React.createElement(
     "div",
@@ -548,8 +582,8 @@ var GameInfo = function GameInfo(props) {
     React.createElement("hr", null),
     React.createElement(
       "h2",
-      null,
-      "Player Stats"
+      { "class": "text-info" },
+      props.info.player.alive ? "Player Stats" : "Respawn Player"
     ),
     props.info.player.alive && React.createElement(
       "div",
@@ -586,7 +620,7 @@ var GameInfo = function GameInfo(props) {
         ),
         React.createElement(
           "button",
-          { id: "increaseHealth", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          { id: "increaseHealth", "class": "levelUpButton btn btn-primary", disabled: disabled, onClick: upgradeChar },
           "+10 HP"
         )
       ),
@@ -602,7 +636,7 @@ var GameInfo = function GameInfo(props) {
         ),
         React.createElement(
           "button",
-          { id: "increaseStrength", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          { id: "increaseStrength", "class": "levelUpButton btn btn-primary", disabled: disabled, onClick: upgradeChar },
           "+1 Strength"
         )
       ),
@@ -618,7 +652,7 @@ var GameInfo = function GameInfo(props) {
         ),
         React.createElement(
           "button",
-          { id: "increaseDefense", "class": "levelUpButton", disabled: disabled, onClick: upgradeChar },
+          { id: "increaseDefense", "class": "levelUpButton btn btn-primary", disabled: disabled, onClick: upgradeChar },
           "+2 Defense"
         )
       ),
@@ -636,22 +670,29 @@ var GameInfo = function GameInfo(props) {
           props.info.player.nextLevel,
           ") "
         ),
-        React.createElement("meter", {
-          value: props.info.player.exp,
-          min: props.info.player.prevLevel,
-          max: props.info.player.nextLevel
-        })
+        React.createElement(
+          "div",
+          { id: "levelUpBar", "class": "progress" },
+          React.createElement("div", {
+            className: "progress-bar progress-bar-striped progress-bar-animated bg-success",
+            style: style,
+            role: "progressbar",
+            "aria-valuenow": props.info.player.exp,
+            "aria-valuemin": props.info.player.prevLevel,
+            "aria-valuemax": props.info.player.nextLevel
+          })
+        )
       )
     ),
     !props.info.player.alive && React.createElement(
       "button",
-      { id: "respawnButton", onClick: respawnRequest },
+      { id: "respawnButton", "class": "btn btn-danger", onClick: respawnRequest },
       "Respawn"
     ),
     React.createElement("hr", null),
     React.createElement(
       "h2",
-      null,
+      { "class": "text-warning" },
       "Boss Bounty"
     ),
     React.createElement(
@@ -722,50 +763,58 @@ var CharSelect = function CharSelect(props) {
     //Insert values using curly braces
     return React.createElement(
       "div",
-      { "class": "charPreview" },
-      React.createElement(
-        "h2",
-        null,
-        character.name
-      ),
+      { "class": "charPreview card border-secondary col" },
       React.createElement(
         "div",
-        { "class": "crop-image" },
-        React.createElement("img", { src: character.imageFile, alt: character.name + " sprite" })
-      ),
-      React.createElement("hr", null),
-      React.createElement(
-        "div",
-        null,
+        { "class": "card-header" },
         React.createElement(
-          "h3",
+          "h2",
           null,
-          "Stats"
-        ),
-        React.createElement(
-          "p",
-          null,
-          "Strength: ",
-          character.strength
-        ),
-        React.createElement(
-          "p",
-          null,
-          "Defense: ",
-          character.defense
-        ),
-        React.createElement(
-          "p",
-          null,
-          "Health: ",
-          character.maxHealth
+          character.name
         )
       ),
-      React.createElement("hr", null),
       React.createElement(
-        "button",
-        { onClick: chooseCharacter, selectid: character.name },
-        "Select"
+        "div",
+        { "class": "card-body" },
+        React.createElement(
+          "div",
+          { "class": "crop-image" },
+          React.createElement("img", { src: character.imageFile, alt: character.name + " sprite" })
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "h3",
+            { "class": "text-info" },
+            "Stats"
+          ),
+          React.createElement(
+            "p",
+            null,
+            "Strength: ",
+            character.strength
+          ),
+          React.createElement(
+            "p",
+            null,
+            "Defense: ",
+            character.defense
+          ),
+          React.createElement(
+            "p",
+            null,
+            "Health: ",
+            character.maxHealth
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "button",
+          { "class": "btn btn-lg btn-secondary charButton", onClick: chooseCharacter, selectid: character.name },
+          "Select"
+        )
       )
     );
   });
@@ -775,11 +824,25 @@ var CharSelect = function CharSelect(props) {
     "div",
     null,
     React.createElement(
-      "h1",
-      null,
+      "h2",
+      { id: "charSelectHeader" },
       "Select Your Character"
     ),
-    charList
+    React.createElement("hr", null),
+    React.createElement(
+      "div",
+      { "class": "container-fluid" },
+      React.createElement(
+        "div",
+        { "class": "row row-centered" },
+        charList.slice(0, 4)
+      ),
+      React.createElement(
+        "div",
+        { "class": "row" },
+        charList.slice(4, 8)
+      )
+    )
   );
 };
 
@@ -809,48 +872,80 @@ var joinRoom = function joinRoom(e, roomName, create) {
 var renderLobby = function renderLobby(rooms) {
   ReactDOM.render(React.createElement(
     "div",
-    { id: "lobbyContainer" },
+    { id: "lobbyContainer", "class": "container" },
     React.createElement(
       "div",
       { id: "roomContainer" },
       React.createElement(
         "form",
-        { id: "createRoomForm" },
+        { id: "createRoomForm", "class": "row row-centered" },
         React.createElement(
-          "label",
-          { "for": "createRoom" },
-          "Create a Room"
+          "p",
+          { "class": "col-sm-4 text-centered" },
+          React.createElement(
+            "label",
+            { id: "createLabel", "for": "createRoom" },
+            "Create Room"
+          )
         ),
-        React.createElement("input", { id: "createRoomField", type: "text", name: "createRoom", maxlength: "4", size: "4" }),
-        React.createElement("input", { type: "submit", value: "Create Room" })
+        React.createElement(
+          "p",
+          { "class": "col-sm-3" },
+          React.createElement("input", { "class": "form-control", id: "createRoomField", type: "text", name: "createRoom", maxlength: "4", size: "4" })
+        ),
+        React.createElement(
+          "p",
+          { "class": "col-sm-3" },
+          React.createElement("input", { "class": "input-group-btn btn btn-success", type: "submit", value: "Create Room" })
+        )
       ),
       React.createElement(
         "form",
-        { id: "joinRoomForm" },
+        { id: "joinRoomForm", "class": "row row-centered" },
         React.createElement(
-          "label",
-          { "for": "joinRoom" },
-          "Join a Room"
+          "p",
+          { "class": "col-sm-4 text-centered" },
+          React.createElement(
+            "label",
+            { id: "joinLabel", "for": "joinRoom" },
+            "Join a Room"
+          )
         ),
-        React.createElement("input", { id: "joinRoomField", type: "text", name: "joinRoom", maxlength: "4", size: "4" }),
-        React.createElement("input", { type: "submit", value: "Join Room" })
+        React.createElement(
+          "p",
+          { "class": "col-sm-3" },
+          React.createElement("input", { "class": "form-control", id: "joinRoomField", type: "text", name: "joinRoom", maxlength: "4", size: "4" })
+        ),
+        React.createElement(
+          "p",
+          { "class": "col-sm-3" },
+          React.createElement("input", { "class": "input-group-btn btn btn-info", type: "submit", value: "Join Room" })
+        )
       )
     ),
     React.createElement(
       "div",
-      { id: "queueContainer" },
+      { "class": "row row-centered" },
+      React.createElement("div", { "class": "col-sm-4" }),
       React.createElement(
         "section",
-        { id: "queueNumber" },
+        { id: "queueNumber", "class": "col-sm-4 col-centered" },
         " "
       ),
+      React.createElement("div", { "class": "col-sm-4" })
+    ),
+    React.createElement(
+      "div",
+      { id: "queueContainer", "class": "row row-centered" },
+      React.createElement("div", { "class": "col-sm-4" }),
       React.createElement(
         "button",
-        { id: "queue", onClick: queue },
+        { id: "queue", "class": "btn btn-info text-centered col-sm-4 col-centered", onClick: queue },
         "Queue!"
-      )
+      ),
+      React.createElement("div", { "class": "col-sm-4" })
     ),
-    React.createElement("div", { id: "roomList" })
+    React.createElement("div", { id: "roomList", "class": "row row-centered" })
   ), document.querySelector("#main"));
 
   var createRoomForm = document.querySelector('#createRoomForm');
@@ -869,32 +964,43 @@ var renderLobby = function renderLobby(rooms) {
 };
 
 var emitError = function emitError(error) {
-  var errorContiner = document.querySelector("#error");
-  errorContiner.innerHTML = error;
+  var errorContainer = document.querySelector("#error");
+  errorContainer.classList.remove("hidden");
+
+  setTimeout(function () {
+    errorContainer.classList.add("hidden");
+  }, 3000);
+
+  errorContainer.innerHTML = error;
 };
 
 var makeRoomBox = function makeRoomBox(roomData) {
   console.dir(roomData);
   console.log(roomData.roomName);
   var roomBox = document.createElement('div');
-  roomBox.className = roomData.roomName;
+  var innerRoomBox = document.createElement('div');
+  innerRoomBox.className = "card roomBox border-light";
+  roomBox.appendChild(innerRoomBox);
+  roomBox.className = "col-sm-4 col-centered";
   var roomName = document.createElement('h3');
-  roomName.className = 'name';
+  roomName.className = 'card-header';
   roomName.innerHTML = roomData.roomName;
 
   var playerKeys = Object.keys(roomData.players);
 
   var count = document.createElement('p');
   count.innerHTML = "Players: " + playerKeys.length + "/8";
+  count.className = 'card-body';
   var button = document.createElement('button');
   button.innerHTML = 'Join Room';
+  button.className = 'btn btn-lg btn-info';
   button.onclick = function () {
     selectRoom(roomData.roomName);
   };
 
-  roomBox.appendChild(roomName);
-  roomBox.appendChild(count);
-  roomBox.appendChild(button);
+  innerRoomBox.appendChild(roomName);
+  innerRoomBox.appendChild(count);
+  innerRoomBox.appendChild(button);
   return roomBox;
 };
 

@@ -1,13 +1,25 @@
 //Construct the main window (using a given width and height for the canvas)
 const GameWindow = (props) => {
   return (
-    <div>
-      <iframe width="560" height="315" 
-        src="http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q"
-        frameBorder="0" allow="autoplay; encrypted-media" id="videoFrame">
-      </iframe>
-      
-      <canvas id="viewport" width={props.width} height={props.height}></canvas>
+    <div class="container-fluid">
+      <div class="row row-centered">
+        <div id="gameInfo" class="col-xl-4 col-centered">
+        </div>
+        
+        <div id="viewport-parent" class="col-xl-4 col-centered">
+          <canvas id="viewport" width={props.width} height={props.height}></canvas>
+          <p>Controls: WASD or Arrow Keys to Move, Space bar or J to attack</p>
+          <p>Avoid: Red rectangles, will damage when completely red</p>
+          <p>Gather: Gems on boss death (score)</p>
+        </div>
+        
+        <div class="col-xl-4 col-centered">
+          <iframe width="560" height="315" 
+            src="http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q"
+            frameBorder="0" allow="autoplay; encrypted-media" id="videoFrame">
+          </iframe>
+        </div>
+      </div>
     </div>
   );
 };
@@ -21,6 +33,7 @@ const renderGame = (width, height) => {
   
   canvas = document.querySelector('#viewport');
   ctx = canvas.getContext('2d');
+  
 };
 
 const renderGameInfo = (gameInfo) => {
@@ -33,12 +46,18 @@ const renderGameInfo = (gameInfo) => {
 const GameInfo = (props) => {
   
   const disabled = props.info.player.points === 0;
+  const expBetweenLevels = props.info.player.nextLevel - props.info.player.prevLevel;
+  const expRatio = Math.floor(((props.info.player.exp - props.info.player.prevLevel) / expBetweenLevels) * 100);
+  const ratioString = `${expRatio}%`;
+  const style = {
+    width: ratioString,
+  }
   
   return (
     <div>
       <h1>Game Info</h1>
       <hr />
-      <h2>Player Stats</h2>
+      <h2 class="text-info">{props.info.player.alive ? "Player Stats" : "Respawn Player"}</h2>
       {props.info.player.alive &&
         <div>
           <p>
@@ -49,34 +68,39 @@ const GameInfo = (props) => {
           </p>
           <p>
             <span>Max Health: {props.info.player.maxHealth} </span> 
-            <button id="increaseHealth" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+10 HP</button>
+            <button id="increaseHealth" class="levelUpButton btn btn-primary" disabled={disabled} onClick={upgradeChar}>+10 HP</button>
           </p>
           <p>
             <span>Strength: {props.info.player.strength} </span>
-            <button id="increaseStrength" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+1 Strength</button>
+            <button id="increaseStrength" class="levelUpButton btn btn-primary" disabled={disabled} onClick={upgradeChar}>+1 Strength</button>
           </p>
           <p>
             <span>Defense: {props.info.player.defense} </span>
-            <button id="increaseDefense" class="levelUpButton" disabled={disabled} onClick={upgradeChar}>+2 Defense</button>
+            <button id="increaseDefense" class="levelUpButton btn btn-primary" disabled={disabled} onClick={upgradeChar}>+2 Defense</button>
           </p>
           <p>
             <span>Level: {props.info.player.level} (Exp: {props.info.player.exp} / {props.info.player.nextLevel}) </span>
-            <meter 
-              value={props.info.player.exp} 
-              min={props.info.player.prevLevel}
-              max={props.info.player.nextLevel}
-            >
-            </meter>
+            <div id="levelUpBar" class="progress">
+              <div
+                className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                style={style}
+                role="progressbar"
+                aria-valuenow={props.info.player.exp}
+                aria-valuemin={props.info.player.prevLevel}
+                aria-valuemax={props.info.player.nextLevel}
+              >
+              </div>
+            </div>
           </p>
         </div>
       }
       
       {!props.info.player.alive &&
-        <button id="respawnButton" onClick={respawnRequest}>Respawn</button>
+        <button id="respawnButton" class="btn btn-danger" onClick={respawnRequest}>Respawn</button>
       }
       
       <hr />
-      <h2>Boss Bounty</h2>
+      <h2 class="text-warning">Boss Bounty</h2>
       <p>
         <span>Boss: {props.info.boss.name}</span>
       </p>
@@ -113,20 +137,24 @@ const CharSelect = (props) => {
   const charList = charactersArray.map((character) => {
     //Insert values using curly braces
     return (
-      <div class="charPreview">
-        <h2>{character.name}</h2>
-        <div class="crop-image">
-          <img src={character.imageFile} alt={`${character.name} sprite`} />
+      <div class="charPreview card border-secondary col">
+        <div class="card-header">
+          <h2>{character.name}</h2>
         </div>
-        <hr />
-        <div>
-          <h3>Stats</h3>
-          <p>Strength: {character.strength}</p>
-          <p>Defense: {character.defense}</p>
-          <p>Health: {character.maxHealth}</p>
+        <div class="card-body">
+          <div class="crop-image">
+            <img src={character.imageFile} alt={`${character.name} sprite`} />
+          </div>
+          <hr />
+          <div>
+            <h3 class="text-info">Stats</h3>
+            <p>Strength: {character.strength}</p>
+            <p>Defense: {character.defense}</p>
+            <p>Health: {character.maxHealth}</p>
+          </div>
+          <hr />
+          <button class="btn btn-lg btn-secondary charButton" onClick={chooseCharacter} selectid={character.name}>Select</button>
         </div>
-        <hr />
-        <button onClick={chooseCharacter} selectid={character.name}>Select</button>
       </div>
     );
   });
@@ -134,8 +162,18 @@ const CharSelect = (props) => {
   //Return all of the panels (the passed in array auto formats)
   return (
     <div>
-      <h1>Select Your Character</h1>
-      {charList}
+      <h2 id="charSelectHeader">Select Your Character</h2>
+      
+      <hr />
+      
+      <div class="container-fluid">
+        <div class="row row-centered">
+          {charList.slice(0, 4)}
+        </div>
+        <div class="row">
+          {charList.slice(4, 8)}
+        </div>
+      </div>
     </div>
   );
 };
@@ -168,24 +206,42 @@ const joinRoom = (e, roomName, create) => {
 
 const renderLobby = (rooms) => {
     ReactDOM.render(
-        <div id="lobbyContainer">
+        <div id="lobbyContainer" class="container">
             <div id="roomContainer">
-                <form id="createRoomForm">
-                    <label for="createRoom">Create a Room</label>
-                    <input id="createRoomField" type="text" name="createRoom" maxlength="4" size="4"></input>
-                    <input type="submit" value="Create Room"></input>
+                <form id="createRoomForm" class="row row-centered">
+                    <p class="col-sm-4 text-centered">
+                      <label id="createLabel" for="createRoom">Create Room</label>
+                    </p>
+                    <p class="col-sm-3">
+                      <input class="form-control" id="createRoomField" type="text" name="createRoom" maxlength="4" size="4"></input>
+                    </p>
+                    <p class="col-sm-3">
+                      <input class="input-group-btn btn btn-success" type="submit" value="Create Room"></input>
+                    </p>
                 </form>
-                <form id="joinRoomForm">
-                    <label for="joinRoom">Join a Room</label>
-                    <input id="joinRoomField" type="text" name="joinRoom" maxlength="4" size ="4"></input>
-                    <input type="submit" value="Join Room"></input>
+                <form id="joinRoomForm" class="row row-centered">
+                    <p class="col-sm-4 text-centered">
+                      <label id="joinLabel" for="joinRoom">Join a Room</label>
+                    </p>
+                    <p class="col-sm-3">
+                      <input class="form-control" id="joinRoomField" type="text" name="joinRoom" maxlength="4" size ="4"></input>
+                    </p>
+                    <p class="col-sm-3">
+                      <input class="input-group-btn btn btn-info" type="submit" value="Join Room"></input>
+                    </p>
                 </form>
             </div>
-            <div id="queueContainer">
-                <section id="queueNumber"> </section>
-                <button id="queue" onClick={queue}>Queue!</button>
+            <div class="row row-centered">
+              <div class="col-sm-4"></div>
+              <section id="queueNumber" class="col-sm-4 col-centered"> </section>
+              <div class="col-sm-4"></div>
             </div>
-            <div id="roomList">
+            <div id="queueContainer" class="row row-centered">
+                <div class="col-sm-4"></div>
+                <button id="queue" class="btn btn-info text-centered col-sm-4 col-centered" onClick={queue}>Queue!</button>
+                <div class="col-sm-4"></div>
+            </div>
+            <div id="roomList" class="row row-centered">
             </div>
         </div>,
         document.querySelector("#main")
@@ -203,32 +259,43 @@ const renderLobby = (rooms) => {
 };
 
 const emitError = (error) => {
-    const errorContiner = document.querySelector("#error");
-    errorContiner.innerHTML = error;
+    const errorContainer = document.querySelector("#error");
+    errorContainer.classList.remove("hidden");
+    
+    setTimeout(() => {
+      errorContainer.classList.add("hidden");
+    }, 3000);
+    
+    errorContainer.innerHTML = error;
 };
 
 const makeRoomBox = (roomData) => {
     console.dir(roomData);
     console.log(roomData.roomName);
     const roomBox = document.createElement('div');
-    roomBox.className = roomData.roomName;
+    const innerRoomBox = document.createElement('div');
+    innerRoomBox.className = "card roomBox border-light";
+    roomBox.appendChild(innerRoomBox);
+    roomBox.className = "col-sm-4 col-centered";
     const roomName = document.createElement('h3');
-    roomName.className = 'name';
+    roomName.className = 'card-header';
     roomName.innerHTML = roomData.roomName;
     
     const playerKeys = Object.keys(roomData.players);
     
     const count = document.createElement('p');
     count.innerHTML = `Players: ${playerKeys.length}/8`;
+    count.className = 'card-body';
     const button = document.createElement('button');
     button.innerHTML = 'Join Room';
+    button.className = 'btn btn-lg btn-info';
     button.onclick = () => {
         selectRoom(roomData.roomName);
     };
     
-    roomBox.appendChild(roomName);
-    roomBox.appendChild(count);
-    roomBox.appendChild(button);
+    innerRoomBox.appendChild(roomName);
+    innerRoomBox.appendChild(count);
+    innerRoomBox.appendChild(button);
     return roomBox;
 };
 

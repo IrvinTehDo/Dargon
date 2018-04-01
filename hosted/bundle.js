@@ -500,6 +500,7 @@ var init = function init() {
   socket.on('roomError', emitError);
   socket.on('updateQueue', updateQueue);
   socket.on('requestToJoin', requestToJoinRoom);
+  socket.on('getOpenRoomList', renderAvailableRooms);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
@@ -805,7 +806,7 @@ var joinRoom = function joinRoom(e, roomName, create) {
   return false;
 };
 
-var renderLobby = function renderLobby() {
+var renderLobby = function renderLobby(rooms) {
   ReactDOM.render(React.createElement(
     "div",
     { id: "lobbyContainer" },
@@ -848,7 +849,8 @@ var renderLobby = function renderLobby() {
         { id: "queue", onClick: queue },
         "Queue!"
       )
-    )
+    ),
+    React.createElement("div", { id: "roomList" })
   ), document.querySelector("#main"));
 
   var createRoomForm = document.querySelector('#createRoomForm');
@@ -862,11 +864,50 @@ var renderLobby = function renderLobby() {
     return joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
   };
   joinRoomForm.addEventListener('submit', sendJoinReq);
+
+  socket.emit('requestOpenRoomList');
 };
 
 var emitError = function emitError(error) {
   var errorContiner = document.querySelector("#error");
   errorContiner.innerHTML = error;
+};
+
+var makeRoomBox = function makeRoomBox(roomData) {
+  console.dir(roomData);
+  console.log(roomData.roomName);
+  var roomBox = document.createElement('div');
+  roomBox.className = roomData.roomName;
+  var roomName = document.createElement('h3');
+  roomName.className = 'name';
+  roomName.innerHTML = roomData.roomName;
+
+  var playerKeys = Object.keys(roomData.players);
+
+  var count = document.createElement('p');
+  count.innerHTML = "Players: " + playerKeys.length + "/8";
+  var button = document.createElement('button');
+  button.innerHTML = 'Join Room';
+  button.onclick = function () {
+    selectRoom(roomData.roomName);
+  };
+
+  roomBox.appendChild(roomName);
+  roomBox.appendChild(count);
+  roomBox.appendChild(button);
+  return roomBox;
+};
+
+var renderAvailableRooms = function renderAvailableRooms(rooms) {
+  var roomList = document.querySelector('#roomList');
+  roomList.innerHTML = "";
+  var roomKeys = Object.keys(rooms);
+  console.dir(rooms);
+  for (var i = 0; i < roomKeys.length; i++) {
+    if (!(rooms[roomKeys[i]].roomName === 'lobby')) {
+      roomList.appendChild(makeRoomBox(rooms[roomKeys[i]]));
+    }
+  }
 };
 'use strict';
 
@@ -979,9 +1020,14 @@ var requestToJoinRoom = function requestToJoinRoom(roomName) {
   socket.emit('joinRoom', roomName);
 };
 
+var selectRoom = function selectRoom(roomName) {
+  socket.emit('joinRoom', roomName);
+};
+
 var handleLobby = function handleLobby(data) {
   room.roomJoined = 'lobby';
   renderLobby(data);
+  socket.emit('requestOpenRoomList');
 };
 
 var aggregateGameInfo = function aggregateGameInfo() {

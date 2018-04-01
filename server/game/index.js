@@ -47,7 +47,7 @@ const bossDeath = (roomId, players, playerHashes, io) => {
     player.exp += exp;
     player.gemsToCollect = gems;
 
-    if (player.exp >= player.nextLevel) {
+    while (player.exp >= player.nextLevel) {
       player.level++;
       player.pointsToAllocate += 2;
       player.prevLevel = player.nextLevel;

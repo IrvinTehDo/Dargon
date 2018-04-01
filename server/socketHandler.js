@@ -55,6 +55,7 @@ const init = (ioInstance) => {
 
     socket.on('getChars', () => {
       socket.emit('availableChars', game.getAvailableChars());
+      socket.emit('getHash', hash);
     });
 
     socket.on('chooseCharacter', (data) => {
@@ -219,17 +220,9 @@ const init = (ioInstance) => {
       }
     });
 
-    // Moved to socket.on('requestCharacterData')
-
-    //    if (!game.hasBoss(socket.roomJoined)) {
-    //      game.spawnBoss(socket.roomJoined, (boss) => {
-    //        console.log(`spawned boss in ${socket.roomJoined}`);
-    //        instanceHandler.rooms[socket.roomJoined].enemies[boss.sprite] = boss;
-    //        io.sockets.in(socket.roomJoined).emit('spawnBoss', boss);
-    //      });
-    //    } else {
-    //      socket.emit('spawnBoss', game.getBoss(socket.roomJoined));
-    //    }
+    socket.on('joinQueue', () => {
+      instanceHandler.addToQueue(socket, io);
+    });
 
     socket.on('disconnect', () => {
       if (!players[socket.hash]) {
@@ -284,6 +277,9 @@ const update = () => {
 
   // 'lobby' is temporary, should be replaced with roomName.
   instanceHandler.processAttacks(players, io);
+
+
+  instanceHandler.processQueue(io);
 
   setTimeout(update, 20);
 };

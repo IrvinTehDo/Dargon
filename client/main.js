@@ -10,7 +10,8 @@ let boss;
 const room = {};
 const frameCounter = 0;
 
-let dungeonFloor, gemSprite;
+let dungeonFloor,
+  gemSprite;
 
 let healthContainer,
   healthBar;
@@ -29,10 +30,10 @@ const keyDownEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
-  if(!player || !player.alive){
+  if (!player || !player.alive) {
     return;
   }
-  
+
   if (key === 87 || key === 38) {
     player.moveUp = true;
   } else if (key === 83 || key === 40) {
@@ -51,10 +52,10 @@ const keyUpEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
-  if(!player || !player.alive){
+  if (!player || !player.alive) {
     return;
   }
-  
+
   if (key === 87 || key === 38) {
     player.moveUp = false;
   } else if (key === 83 || key === 40) {
@@ -72,8 +73,8 @@ const init = () => {
   // canvas = document.querySelector('#viewport');
   // ctx = canvas.getContext('2d');
 
-  gemSprite = document.querySelector("#gemSprite");
-  dungeonFloor = document.querySelector("#dungeonFloor");
+  gemSprite = document.querySelector('#gemSprite');
+  dungeonFloor = document.querySelector('#dungeonFloor');
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
@@ -81,6 +82,10 @@ const init = () => {
 
   // Choose a character first
   socket.emit('getChars');
+
+  socket.on('getHash', (hash) => {
+    self.hash = hash;
+  });
 
   socket.on('joined', roomSetup);
   socket.on('availableChars', handleChars);
@@ -97,6 +102,9 @@ const init = () => {
   socket.on('removeBossAttack', removeBossAttack);
   socket.on('bossDeath', bossDeath);
   socket.on('dispenseGems', dispenseGems);
+  socket.on('roomError', emitError);
+  socket.on('updateQueue', updateQueue);
+  socket.on('requestToJoin', requestToJoinRoom);
 
 
   document.body.addEventListener('keydown', keyDownEvent);

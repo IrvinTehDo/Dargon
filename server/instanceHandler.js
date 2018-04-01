@@ -1,15 +1,18 @@
 const physicsHandler = require('./physics/index.js');
 
+const xxh = require('xxhashjs');
+
 const game = require('./game');
 
 const rooms = {};
+
+const queue = [];
 
 const setUpLobby = () => {
   /*eslint-disable */
   rooms['lobby'] = {};
   rooms['lobby'].roomName = 'lobby';
   rooms['lobby'].players = {};
-  // temporary
   rooms['lobby'].attacks = [];
   rooms['lobby'].enemies = {};
   /* eslint-enable */
@@ -88,37 +91,6 @@ const processAttacks = (players, io) => {
       }
     }
   }
-
-
-//  if (rooms[roomName].attacks.length > 0) {
-//    // Check if player and boss hit
-//
-//    // Get all enemies/bosses
-//    const keys = Object.keys(rooms.lobby.enemies); // Object.keys(rooms[roomName].enemies);
-//    // TO DO once rooms are properly set up: change rooms.lobby to rooms[roomName]
-//    // and implement a check to make sure we're not checking lobby.
-//
-//    // For each attack
-//    for (let i = 0; i < rooms.lobby.attacks.length; i++) {
-//      // For each enemy
-//      for (let z = 0; z < keys.length; z++) {
-//        const enemy = rooms.lobby.enemies[keys[z]];
-//
-//        const hit = physicsHandler.checkHitEnemy(rooms.lobby.attacks[i], enemy);
-//
-//        if (hit) {
-//          // Handle damage calculations here
-//          game.takeDamage('lobby', 1, io); // temporary call to lobby
-//          console.log('hit');
-//        } else {
-//          console.log('miss');
-//        }
-//      }
-//
-//      rooms[roomName].attacks.splice(i);
-//      i--;
-//    }
-//  }
 };
 
 const addAttack = (roomName, attack, player) => {
@@ -129,6 +101,61 @@ const addAttack = (roomName, attack, player) => {
   console.dir(rooms[roomName].attacks);
 };
 
+
+const hashesInQueue = () => {
+  const tempQueueHashes = [];
+
+  for (let i = 0; i < queue.length; i++) {
+    tempQueueHashes.push(queue[i].hash);
+  }
+
+  return tempQueueHashes;
+};
+
+const addToQueue = (socket, io) => {
+  // Add hash to queue
+  console.log(`added ${socket.hash} to queue`);
+  queue.push(socket);
+  // io.sockets.in('lobby').emit('updateQueue', queue);
+  io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
+};
+
+const processQueue = (io) => {
+  // Process Queue
+  const roomKeys = Object.keys(rooms);
+
+
+  if (queue.length <= 3) {
+    for (let z = 0; z < roomKeys.length; z++) {
+      const playerKey = Object.keys(rooms[roomKeys[z]].players);
+      if (playerKey.length <= 7 && rooms[roomKeys[z]].roomName !== 'lobby' && queue.length > 0) {
+        queue[0].emit('requestToJoin', rooms[roomKeys[z]].roomName);
+        queue.splice(0);
+        io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
+        break;
+      }
+    }
+  } else if (queue.length > 3) {
+    let time = new Date().getTime();
+    let hash = xxh.h32(`${time}`, 0x010A020B).toString(16).substr(0, 4);
+
+    while (rooms[hash]) {
+      time = new Date().getTime();
+      hash = xxh.h32(`${time}`, 0x010A020B).toString(16).substr(0, 4);
+    }
+
+    roomInit(hash, queue[0]);
+
+    queue[0].emit('requestToJoin', rooms[hash].roomName);
+    queue[1].emit('requestToJoin', rooms[hash].roomName);
+    queue[2].emit('requestToJoin', rooms[hash].roomName);
+    queue[3].emit('requestToJoin', rooms[hash].roomName);
+
+    queue.splice(0, 4);
+    io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
+  }
+};
+
 module.exports = {
   rooms,
   setUpLobby,
@@ -136,4 +163,6 @@ module.exports = {
   roomJoin,
   addAttack,
   processAttacks,
+  addToQueue,
+  processQueue,
 };

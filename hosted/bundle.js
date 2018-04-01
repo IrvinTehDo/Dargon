@@ -391,7 +391,7 @@ var drawAndUpdateGems = function drawAndUpdateGems() {
     ctx.drawImage(gemSprite, gemSpriteX, gemSpriteY, 125, 125, gem.x, gem.y, 25, 25);
   }
 };
-"use strict";
+'use strict';
 
 var canvas = void 0,
     ctx = void 0;
@@ -418,7 +418,7 @@ var roomSetup = function roomSetup(roomJoined) {
   // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
-  console.dir("client roomJoined: " + room.roomJoined);
+  console.dir('client roomJoined: ' + room.roomJoined);
 };
 
 var keyDownEvent = function keyDownEvent(e) {
@@ -468,8 +468,8 @@ var init = function init() {
   // canvas = document.querySelector('#viewport');
   // ctx = canvas.getContext('2d');
 
-  gemSprite = document.querySelector("#gemSprite");
-  dungeonFloor = document.querySelector("#dungeonFloor");
+  gemSprite = document.querySelector('#gemSprite');
+  dungeonFloor = document.querySelector('#dungeonFloor');
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
@@ -477,6 +477,10 @@ var init = function init() {
 
   // Choose a character first
   socket.emit('getChars');
+
+  socket.on('getHash', function (hash) {
+    self.hash = hash;
+  });
 
   socket.on('joined', roomSetup);
   socket.on('availableChars', handleChars);
@@ -493,6 +497,9 @@ var init = function init() {
   socket.on('removeBossAttack', removeBossAttack);
   socket.on('bossDeath', bossDeath);
   socket.on('dispenseGems', dispenseGems);
+  socket.on('roomError', emitError);
+  socket.on('updateQueue', updateQueue);
+  socket.on('requestToJoin', requestToJoinRoom);
 
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
@@ -801,28 +808,46 @@ var joinRoom = function joinRoom(e, roomName, create) {
 var renderLobby = function renderLobby() {
   ReactDOM.render(React.createElement(
     "div",
-    { id: "roomContainer" },
+    { id: "lobbyContainer" },
     React.createElement(
-      "form",
-      { id: "createRoomForm" },
+      "div",
+      { id: "roomContainer" },
       React.createElement(
-        "label",
-        { "for": "createRoom" },
-        "Create a Room"
+        "form",
+        { id: "createRoomForm" },
+        React.createElement(
+          "label",
+          { "for": "createRoom" },
+          "Create a Room"
+        ),
+        React.createElement("input", { id: "createRoomField", type: "text", name: "createRoom", maxlength: "4", size: "4" }),
+        React.createElement("input", { type: "submit", value: "Create Room" })
       ),
-      React.createElement("input", { id: "createRoomField", type: "text", name: "createRoom", maxlength: "4", size: "4" }),
-      React.createElement("input", { type: "submit", value: "Create Room" })
+      React.createElement(
+        "form",
+        { id: "joinRoomForm" },
+        React.createElement(
+          "label",
+          { "for": "joinRoom" },
+          "Join a Room"
+        ),
+        React.createElement("input", { id: "joinRoomField", type: "text", name: "joinRoom", maxlength: "4", size: "4" }),
+        React.createElement("input", { type: "submit", value: "Join Room" })
+      )
     ),
     React.createElement(
-      "form",
-      { id: "joinRoomForm" },
+      "div",
+      { id: "queueContainer" },
       React.createElement(
-        "label",
-        { "for": "joinRoom" },
-        "Join a Room"
+        "section",
+        { id: "queueNumber" },
+        " "
       ),
-      React.createElement("input", { id: "joinRoomField", type: "text", name: "joinRoom", maxlength: "4", size: "4" }),
-      React.createElement("input", { type: "submit", value: "Join Room" })
+      React.createElement(
+        "button",
+        { id: "queue", onClick: queue },
+        "Queue!"
+      )
     )
   ), document.querySelector("#main"));
 
@@ -838,6 +863,11 @@ var renderLobby = function renderLobby() {
   };
   joinRoomForm.addEventListener('submit', sendJoinReq);
 };
+
+var emitError = function emitError(error) {
+  var errorContiner = document.querySelector("#error");
+  errorContiner.innerHTML = error;
+};
 'use strict';
 
 var update = function update() {
@@ -852,7 +882,6 @@ var updateLocalPosition = function updateLocalPosition() {
   var player = players[hash];
 
   if (!player.alive) {
-
     if (player.anim.row !== 20) {
       switchAnimation(player, 'death');
     }
@@ -904,7 +933,7 @@ var updateLocalPosition = function updateLocalPosition() {
 };
 
 var handleChars = function handleChars(data) {
-  //Load character files into memory for later usage
+  // Load character files into memory for later usage
   var charKeys = Object.keys(data);
 
   var _loop = function _loop(i) {
@@ -930,6 +959,26 @@ var chooseCharacter = function chooseCharacter(e) {
   socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
 };
 
+var queue = function queue(e) {
+  e.target.disabled = true;
+  e.target.innerHTML = 'queued';
+  console.log('joining queue');
+  socket.emit('joinQueue');
+};
+
+var updateQueue = function updateQueue(hashes) {
+  for (var i = 0; i < hashes.length; i++) {
+    if (hash === hashes[i]) {
+      document.querySelector('#queueNumber').innerHTML = 'Posistion in Queue: ' + (i + 1) + '/' + hashes.length;
+      break;
+    }
+  }
+};
+
+var requestToJoinRoom = function requestToJoinRoom(roomName) {
+  socket.emit('joinRoom', roomName);
+};
+
 var handleLobby = function handleLobby(data) {
   room.roomJoined = 'lobby';
   renderLobby(data);
@@ -948,10 +997,10 @@ var aggregateGameInfo = function aggregateGameInfo() {
     };
   } else {
     bossDetails = {
-      name: "N/A",
-      level: "N/A",
-      exp: "N/A",
-      gems: "N/A"
+      name: 'N/A',
+      level: 'N/A',
+      exp: 'N/A',
+      gems: 'N/A'
     };
   }
 
@@ -975,7 +1024,6 @@ var aggregateGameInfo = function aggregateGameInfo() {
 };
 
 var setPlayer = function setPlayer(data) {
-
   hash = data.hash;
   players[hash] = data;
   players[hash].room = room.roomJoined;
@@ -1044,7 +1092,7 @@ var updatePlayer = function updatePlayer(data) {
     renderGameInfo(info);
   }
 
-  //Don't update movement or animations if the update is about this player
+  // Don't update movement or animations if the update is about this player
   if (hash === data.hash) {
     return;
   }
@@ -1064,7 +1112,7 @@ var updatePlayer = function updatePlayer(data) {
   player.lastUpdate = data.lastUpdate;
 
   if (player.attacking) {
-    switchAnimation(player, "attack");
+    switchAnimation(player, 'attack');
   }
 };
 
@@ -1104,7 +1152,9 @@ var updateBoss = function updateBoss(data) {
 var updateBossAttack = function updateBossAttack(data) {
   var progress = data.progress / data.complete;
   if (!damageAreas[data.id]) {
-    damageAreas[data.id] = new DamageArea({ x: data.x, y: data.y, w: data.w, h: data.h }, progress);
+    damageAreas[data.id] = new DamageArea({
+      x: data.x, y: data.y, w: data.w, h: data.h
+    }, progress);
   } else {
     damageAreas[data.id].update(progress);
   }
@@ -1126,15 +1176,15 @@ var bossDeath = function bossDeath() {
 };
 
 var upgradeChar = function upgradeChar(e) {
-  var id = e.target.getAttribute("id");
+  var id = e.target.getAttribute('id');
   switch (id) {
-    case "increaseHealth":
+    case 'increaseHealth':
       socket.emit('characterUpgrade', { upgrade: 'health' });
       break;
-    case "increaseStrength":
+    case 'increaseStrength':
       socket.emit('characterUpgrade', { upgrade: 'strength' });
       break;
-    case "increaseDefense":
+    case 'increaseDefense':
       socket.emit('characterUpgrade', { upgrade: 'defense' });
       break;
   }

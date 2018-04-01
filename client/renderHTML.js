@@ -168,17 +168,23 @@ const joinRoom = (e, roomName, create) => {
 
 const renderLobby = () => {
     ReactDOM.render(
-        <div id="roomContainer">
-            <form id="createRoomForm">
-                <label for="createRoom">Create a Room</label>
-                <input id="createRoomField" type="text" name="createRoom" maxlength="4" size="4"></input>
+        <div id="lobbyContainer">
+            <div id="roomContainer">
+                <form id="createRoomForm">
+                    <label for="createRoom">Create a Room</label>
+                    <input id="createRoomField" type="text" name="createRoom" maxlength="4" size="4"></input>
                     <input type="submit" value="Create Room"></input>
-            </form>
+                </form>
                 <form id="joinRoomForm">
-                <label for="joinRoom">Join a Room</label>
-                <input id="joinRoomField" type="text" name="joinRoom" maxlength="4" size ="4"></input>
-                <input type="submit" value="Join Room"></input>
-            </form>
+                    <label for="joinRoom">Join a Room</label>
+                    <input id="joinRoomField" type="text" name="joinRoom" maxlength="4" size ="4"></input>
+                    <input type="submit" value="Join Room"></input>
+                </form>
+            </div>
+            <div id="queueContainer">
+                <section id="queueNumber"> </section>
+                <button id="queue" onClick={queue}>Queue!</button>
+            </div>
         </div>,
         document.querySelector("#main")
     ); 
@@ -191,3 +197,9 @@ const renderLobby = () => {
   const sendJoinReq = e => joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
   joinRoomForm.addEventListener('submit', sendJoinReq);    
 };
+
+const emitError = (error) => {
+    const errorContiner = document.querySelector("#error");
+    errorContiner.innerHTML = error;
+};
+

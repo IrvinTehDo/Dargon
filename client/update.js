@@ -9,12 +9,11 @@ const update = () => {
 const updateLocalPosition = () => {
   const player = players[hash];
 
-  if(!player.alive){
-    
-    if(player.anim.row !== 20){
+  if (!player.alive) {
+    if (player.anim.row !== 20) {
       switchAnimation(player, 'death');
     }
-    
+
     player.moveUp = false;
     player.moveDown = false;
     player.moveLeft = false;
@@ -23,7 +22,7 @@ const updateLocalPosition = () => {
     player.direction = player.DIRECTIONS.up;
     return;
   }
-  
+
   player.prevX = player.x;
   player.prevY = player.y;
 
@@ -56,43 +55,63 @@ const updateLocalPosition = () => {
   } else {
     switchAnimation(player, 'attack');
   }
-  
+
   player.ratio = 0.05;
   socket.emit('playerMovement', player);
 };
 
 const handleChars = (data) => {
-  //Load character files into memory for later usage
+  // Load character files into memory for later usage
   const charKeys = Object.keys(data);
-  for(let i = 0; i < charKeys.length; i++){
+  for (let i = 0; i < charKeys.length; i++) {
     const character = data[charKeys[i]];
-    
+
     const charImage = new Image();
-    
+
     charImage.onload = () => {
       characterImageStruct[charKeys[i]] = charImage;
-    }
-    
+    };
+
     charImage.src = character.imageFile;
   }
-  
+
   renderCharacterSelect(data);
-}
+};
 
 const chooseCharacter = (e) => {
-  socket.emit('chooseCharacter', {id: e.target.getAttribute('selectid')});
+  socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
+};
+
+const queue = (e) => {
+  e.target.disabled = true;
+  e.target.innerHTML = 'queued';
+  console.log('joining queue');
+  socket.emit('joinQueue');
+};
+
+const updateQueue = (hashes) => {
+  for (let i = 0; i < hashes.length; i++) {
+    if (hash === hashes[i]) {
+      document.querySelector('#queueNumber').innerHTML = `Posistion in Queue: ${i + 1}/${hashes.length}`;
+      break;
+    }
+  }
+};
+
+const requestToJoinRoom = (roomName) => {
+  socket.emit('joinRoom', roomName);
 };
 
 const handleLobby = (data) => {
-    room.roomJoined = 'lobby';
-    renderLobby(data);
+  room.roomJoined = 'lobby';
+  renderLobby(data);
 };
 
 const aggregateGameInfo = () => {
   const player = players[hash];
   let bossDetails = {};
- 
-  if(boss && boss.alive){
+
+  if (boss && boss.alive) {
     bossDetails = {
       name: boss.name,
       level: boss.level,
@@ -101,13 +120,13 @@ const aggregateGameInfo = () => {
     };
   } else {
     bossDetails = {
-      name: "N/A",
-      level: "N/A",
-      exp: "N/A",
-      gems: "N/A",
+      name: 'N/A',
+      level: 'N/A',
+      exp: 'N/A',
+      gems: 'N/A',
     };
   }
-  
+
   const info = {
     player: {
       maxHealth: player.maxHealth,
@@ -123,17 +142,16 @@ const aggregateGameInfo = () => {
     },
     boss: bossDetails,
   };
-  
+
   return info;
-}
+};
 
 const setPlayer = (data) => {
-  
   hash = data.hash;
   players[hash] = data;
   players[hash].room = room.roomJoined;
-  
-  
+
+
   renderGame(600, 600, info);
   const info = aggregateGameInfo();
   renderGameInfo(info);
@@ -153,7 +171,7 @@ const sendAttack = () => {
     width: player.width,
     height: player.height,
   };
-  
+
   socket.emit('sendAttack', attack, player.room);
 };
 
@@ -176,14 +194,14 @@ const updatePlayer = (data) => {
   const player = players[data.hash];
 
   let flagToReRenderInfo = false;
-  if(player.exp != data.exp 
-    || player.pointsToAllocate != data.pointsToAllocate 
+  if (player.exp != data.exp
+    || player.pointsToAllocate != data.pointsToAllocate
     || player.gems != data.gems
     || player.alive != data.alive
-  ){
+  ) {
     flagToReRenderInfo = true;
   }
-  
+
   // Player specific updates
   player.currentHealth = data.currentHealth;
   player.maxHealth = data.maxHealth;
@@ -196,17 +214,17 @@ const updatePlayer = (data) => {
   player.pointsToAllocate = data.pointsToAllocate;
   player.gems = data.gems;
   player.alive = data.alive;
-  
-  if(flagToReRenderInfo){
+
+  if (flagToReRenderInfo) {
     const info = aggregateGameInfo();
     renderGameInfo(info);
   }
-  
-  //Don't update movement or animations if the update is about this player
+
+  // Don't update movement or animations if the update is about this player
   if (hash === data.hash) {
     return;
   }
-  
+
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -220,9 +238,9 @@ const updatePlayer = (data) => {
   player.moveRight = data.moveRight;
   player.attacking = data.attacking;
   player.lastUpdate = data.lastUpdate;
-  
-  if(player.attacking){
-    switchAnimation(player, "attack");
+
+  if (player.attacking) {
+    switchAnimation(player, 'attack');
   }
 };
 
@@ -261,15 +279,17 @@ const updateBoss = (data) => {
 
 const updateBossAttack = (data) => {
   const progress = data.progress / data.complete;
-  if(!damageAreas[data.id]){
-    damageAreas[data.id] = new DamageArea({x: data.x, y: data.y, w: data.w, h: data.h}, progress);
+  if (!damageAreas[data.id]) {
+    damageAreas[data.id] = new DamageArea({
+      x: data.x, y: data.y, w: data.w, h: data.h,
+    }, progress);
   } else {
     damageAreas[data.id].update(progress);
   }
 };
 
 const removeBossAttack = (data) => {
-  if(damageAreas[data.id]){
+  if (damageAreas[data.id]) {
     damageAreas[data.id] = undefined;
     delete damageAreas[data.id];
   }
@@ -284,33 +304,33 @@ const bossDeath = () => {
 };
 
 const upgradeChar = (e) => {
-  const id = e.target.getAttribute("id");
-  switch(id){
-    case "increaseHealth":
-      socket.emit('characterUpgrade', {upgrade: 'health'});
+  const id = e.target.getAttribute('id');
+  switch (id) {
+    case 'increaseHealth':
+      socket.emit('characterUpgrade', { upgrade: 'health' });
       break;
-    case "increaseStrength":
-      socket.emit('characterUpgrade', {upgrade: 'strength'});
+    case 'increaseStrength':
+      socket.emit('characterUpgrade', { upgrade: 'strength' });
       break;
-    case "increaseDefense":
-      socket.emit('characterUpgrade', {upgrade: 'defense'});
+    case 'increaseDefense':
+      socket.emit('characterUpgrade', { upgrade: 'defense' });
       break;
   }
 };
 
 const dispenseGems = (data) => {
   const gemCount = data.gems;
-  
-  for(let i = 0; i < gemCount; i++){
+
+  for (let i = 0; i < gemCount; i++) {
     const randAngle = Math.random() * 360;
     const radian = (randAngle * Math.PI) / 180;
     const speed = 20 * Math.random() + 2;
     const vector = {
       x: Math.sin(radian) * speed,
       y: Math.cos(radian) * speed,
-    }
+    };
     const sprite = Math.floor(Math.random() * 4);
-    
+
     const gem = {
       x: boss.x,
       y: boss.y,
@@ -320,8 +340,8 @@ const dispenseGems = (data) => {
       speed,
       vector,
       sprite,
-    }
-    
+    };
+
     gems.push(gem);
   }
 };
@@ -332,4 +352,4 @@ const collectGem = () => {
 
 const respawnRequest = () => {
   socket.emit('respawnRequest');
-}
+};

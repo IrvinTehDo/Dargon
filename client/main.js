@@ -105,6 +105,7 @@ const init = () => {
   socket.on('roomError', emitError);
   socket.on('updateQueue', updateQueue);
   socket.on('requestToJoin', requestToJoinRoom);
+  socket.on('getOpenRoomList', renderAvailableRooms);    
 
 
   document.body.addEventListener('keydown', keyDownEvent);

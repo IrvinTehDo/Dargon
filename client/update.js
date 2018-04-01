@@ -102,9 +102,14 @@ const requestToJoinRoom = (roomName) => {
   socket.emit('joinRoom', roomName);
 };
 
+const selectRoom = (roomName) => {
+  socket.emit('joinRoom', roomName);
+};
+
 const handleLobby = (data) => {
   room.roomJoined = 'lobby';
   renderLobby(data);
+  socket.emit('requestOpenRoomList');
 };
 
 const aggregateGameInfo = () => {

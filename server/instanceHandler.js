@@ -156,6 +156,21 @@ const processQueue = (io) => {
   }
 };
 
+const getOpenRooms = () => {
+  const availableRooms = {};
+
+  const roomKeys = Object.keys(rooms);
+  for (let i = 0; i < roomKeys.length; i++) {
+    const playerKeys = Object.keys(rooms[roomKeys[i]].players);
+    if (playerKeys.length < 8) {
+      availableRooms[rooms[roomKeys[i]].roomName]
+              = rooms[roomKeys[i]];
+    }
+  }
+
+  return availableRooms;
+};
+
 module.exports = {
   rooms,
   setUpLobby,
@@ -165,4 +180,5 @@ module.exports = {
   processAttacks,
   addToQueue,
   processQueue,
+  getOpenRooms,
 };

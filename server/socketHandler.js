@@ -46,13 +46,6 @@ const init = (ioInstance) => {
 
     socket.hash = hash;
 
-    // One room or multiple?
-    socket.join('lobby');
-    socket.roomJoined = 'lobby';
-    instanceHandler.roomJoin('lobby', socket);
-
-    // socket.emit('joined', socket.roomJoined);
-
     socket.on('getChars', () => {
       socket.emit('availableChars', game.getAvailableChars());
       socket.emit('getHash', hash);
@@ -72,6 +65,9 @@ const init = (ioInstance) => {
           },
         );
         // socket.emit('setPlayer', players[hash]);
+        socket.join('lobby');
+        socket.roomJoined = 'lobby';
+        instanceHandler.roomJoin('lobby', socket);
         socket.emit('moveToLobby');
       }
     });
@@ -96,7 +92,8 @@ const init = (ioInstance) => {
 
     socket.on('requestCharacterData', () => {
       socket.emit('setPlayer', players[hash]);
-
+      instanceHandler.rooms[socket.roomJoined].players[hash] = players[hash];
+      io.sockets.in('lobby').emit('getOpenRoomList', instanceHandler.getOpenRooms());
       if (!game.hasBoss(socket.roomJoined)) {
         const level = game.calcAggregateLevel(
           players,
@@ -204,16 +201,6 @@ const init = (ioInstance) => {
           delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
         }
         socket.roomJoined = roomName;
-        // To Do: Remove player/socket from other instance/room and move them to the new one.
-
-        // When a player joins, immediately put them on the screen
-        // io.sockets.in(socket.roomJoined).emit('updatePlayer', players[socket.hash]);
-
-        // Update the new player with all existing players
-        /* const playersInRoom = Object.keys(instanceHandler.rooms[socket.roomJoined]);
-        for(let i = 0; i < playersInRoom.length; i++){
-          socket.emit('updatePlayer', players[playersInRoom[i]]);
-        } */
 
         socket.emit('joined', roomName);
         console.log('joined room');
@@ -222,6 +209,10 @@ const init = (ioInstance) => {
 
     socket.on('joinQueue', () => {
       instanceHandler.addToQueue(socket, io);
+    });
+
+    socket.on('requestOpenRoomList', () => {
+      socket.emit('getOpenRoomList', instanceHandler.getOpenRooms());
     });
 
     socket.on('disconnect', () => {
@@ -234,6 +225,7 @@ const init = (ioInstance) => {
       players[socket.hash] = undefined;
       delete players[socket.hash];
       socket.leave(socket.roomJoined);
+      io.sockets.in('lobby').emit('getOpenRoomList', instanceHandler.getOpenRooms());
     });
   });
 };
@@ -277,7 +269,6 @@ const update = () => {
 
   // 'lobby' is temporary, should be replaced with roomName.
   instanceHandler.processAttacks(players, io);
-
 
   instanceHandler.processQueue(io);
 

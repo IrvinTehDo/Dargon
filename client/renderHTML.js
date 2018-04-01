@@ -166,7 +166,7 @@ const joinRoom = (e, roomName, create) => {
   return false;
 };
 
-const renderLobby = () => {
+const renderLobby = (rooms) => {
     ReactDOM.render(
         <div id="lobbyContainer">
             <div id="roomContainer">
@@ -185,6 +185,8 @@ const renderLobby = () => {
                 <section id="queueNumber"> </section>
                 <button id="queue" onClick={queue}>Queue!</button>
             </div>
+            <div id="roomList">
+            </div>
         </div>,
         document.querySelector("#main")
     ); 
@@ -196,10 +198,49 @@ const renderLobby = () => {
   const joinRoomForm = document.querySelector('#joinRoomForm');
   const sendJoinReq = e => joinRoom(e, joinRoomForm.querySelector('#joinRoomField').value, false);
   joinRoomForm.addEventListener('submit', sendJoinReq);    
+    
+   socket.emit('requestOpenRoomList');
 };
 
 const emitError = (error) => {
     const errorContiner = document.querySelector("#error");
     errorContiner.innerHTML = error;
+};
+
+const makeRoomBox = (roomData) => {
+    console.dir(roomData);
+    console.log(roomData.roomName);
+    const roomBox = document.createElement('div');
+    roomBox.className = roomData.roomName;
+    const roomName = document.createElement('h3');
+    roomName.className = 'name';
+    roomName.innerHTML = roomData.roomName;
+    
+    const playerKeys = Object.keys(roomData.players);
+    
+    const count = document.createElement('p');
+    count.innerHTML = `Players: ${playerKeys.length}/8`;
+    const button = document.createElement('button');
+    button.innerHTML = 'Join Room';
+    button.onclick = () => {
+        selectRoom(roomData.roomName);
+    };
+    
+    roomBox.appendChild(roomName);
+    roomBox.appendChild(count);
+    roomBox.appendChild(button);
+    return roomBox;
+};
+
+const renderAvailableRooms = (rooms) => {
+    const roomList = document.querySelector('#roomList');
+    roomList.innerHTML = "";
+    const roomKeys = Object.keys(rooms);
+    console.dir(rooms);
+    for(let i = 0; i < roomKeys.length; i++) {
+        if(!(rooms[roomKeys[i]].roomName === 'lobby')) {
+            roomList.appendChild(makeRoomBox(rooms[roomKeys[i]]));
+        }
+    }
 };
 

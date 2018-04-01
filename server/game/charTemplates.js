@@ -1,5 +1,7 @@
 const imgDir = '/assets/img/char/';
+// Define character templates (used for the character selection process)
 const templates = {
+  // All characters have a name, specific image file, and starting strength, defense, and max health
   Rean: {
     name: 'Rean',
     imageFile: `${imgDir}rean.png`,

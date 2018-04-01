@@ -1,5 +1,7 @@
 class Character {
+  // Build a character given a name, hash, position, and starting stats
   constructor(name, hash, x, y, stats) {
+    // Define player animations (how to parse spritesheet and run animation)
     this.ANIMS = {
       meditate: {
         row: 0,
@@ -52,6 +54,7 @@ class Character {
       right: 3,
     };
 
+    // Define starting parameters for the character
     this.alive = true;
     this.currentHealth = stats.maxHealth;
     this.maxHealth = stats.maxHealth;

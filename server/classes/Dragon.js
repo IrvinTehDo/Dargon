@@ -1,5 +1,7 @@
 class Dragon {
+  // Build a dragon boss given a starting location, starting stats, and a room to bind to
   constructor(location, stats, roomId) {
+    // Define animations for the dragon
     this.ANIMS = {
       idle: {
         row: 4,
@@ -34,6 +36,7 @@ class Dragon {
       up: 3,
     };
 
+    // Define starting state for the dragon based on provided stats
     this.room = roomId;
     this.sprite = 'dragon';
     this.name = 'Algor';

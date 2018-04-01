@@ -1,102 +1,20 @@
-'use strict';
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Character = function Character(hash) {
-  var _this = this;
-
-  _classCallCheck(this, Character);
-
-  this.ANIMS = {
-    meditate: {
-      row: 0,
-      frameCount: 7,
-      speed: 12
-    },
-    interact: {
-      row: 4,
-      frameCount: 8,
-      speed: 5
-    },
-    walk: {
-      row: 8,
-      frameCount: 9,
-      speed: 4
-    },
-    swipe: {
-      row: 12,
-      frameCount: 6,
-      speed: 4
-    },
-    'fire-arrow': {
-      row: 16,
-      frameCount: 13,
-      speed: 5
-    },
-    die: {
-      row: 20,
-      frameCount: 6,
-      speed: 10
-    },
-    attack: {
-      row: 21,
-      frameCount: 6,
-      speed: 4
-    }
-  };
-
-  this.DIRECTIONS = {
-    up: 0,
-    left: 1,
-    down: 2,
-    right: 3
-  };
-
-  this.setImage = function (image) {
-    _this.image = image;
-  };
-
-  this.hash = hash;
-  this.image = null;
-  this.x = 0;
-  this.y = 0;
-  this.prevX = 0;
-  this.prevY = 0;
-  this.destX = 0;
-  this.destY = 0;
-  this.width = 64;
-  this.height = 64;
-  this.attRowOffsetY = 1344;
-  this.normWidth = 64;
-  this.normHeight = 64;
-  this.attWidth = 192;
-  this.attHeight = 192;
-  this.ratio = 0;
-  this.frame = 0;
-  this.anim = this.ANIMS.meditate;
-  this.direction = this.DIRECTIONS.up;
-  this.moveUp = false;
-  this.moveLeft = false;
-  this.moveDown = false;
-  this.moveRight = false;
-  this.attacking = false;
-  this.lastUpdate = new Date().getTime();
-  this.room = 'lobby';
-};
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+//Class for damage areas where the player can be hurt if they stand within it for too long
 var DamageArea = function () {
   function DamageArea(dimensions, progress) {
     _classCallCheck(this, DamageArea);
 
+    //Set the general status
     this.status = {
       opacity: 0.2 + 0.6 * progress
     };
 
+    //Define the boxes dimensions (start as a 0 pixel box)
     this.dimensions = {
       x: dimensions.x,
       y: dimensions.y,
@@ -109,6 +27,7 @@ var DamageArea = function () {
       h: dimensions.h
     };
 
+    //Define some phrases that will show up in arcane script
     this.phrases = [{
       text: "Great Power",
       textOffset: 0,
@@ -130,6 +49,9 @@ var DamageArea = function () {
 
   _createClass(DamageArea, [{
     key: "growBox",
+
+
+    //Grow the box by a given amount (constrain to the max box size)
     value: function growBox(amount) {
       this.dimensions.w += amount;
       this.dimensions.h += amount;
@@ -142,6 +64,9 @@ var DamageArea = function () {
         this.dimensions.h = this.fullSize.h;
       }
     }
+
+    //Update the boxes opacity
+
   }, {
     key: "update",
     value: function update(progress) {
@@ -155,6 +80,7 @@ var DamageArea = function () {
 ;
 "use strict";
 
+//Grab the boss spritesheets
 var bossImageStruct = {
   "dragon": document.querySelector("#dragonBoss")
 };
@@ -164,13 +90,16 @@ var characterImageStruct = {};
 var damageAreas = {};
 var gems = [];
 
+//Function that lerps between two given points using the provided ratio
 var lerp = function lerp(pos1, pos2, ratio) {
   var component1 = (1 - ratio) * pos1;
   var component2 = ratio * pos2;
   return component1 + component2;
 };
 
+//Draw the scene to the canvas
 var draw = function draw() {
+  //Clear the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   //Draw background
@@ -180,50 +109,64 @@ var draw = function draw() {
   var playerKeys = Object.keys(players);
   frameCounter++;
 
+  //Draw all of the damage areas
   var damageAreaKeys = Object.keys(damageAreas);
   for (var i = 0; i < damageAreaKeys.length; i++) {
     drawDamageArea(damageAreas[damageAreaKeys[i]]);
   }
 
+  //Draw all of the gems
   drawAndUpdateGems();
 
+  //Iterate over the players in the room
   for (var _i = 0; _i < playerKeys.length; _i++) {
     var player = players[playerKeys[_i]];
 
+    //Update the position ratio for lerping
     if (player.ratio < 1) {
       player.ratio += 0.05;
     }
 
     ctx.save();
 
+    //Calculate the new player position
     player.x = lerp(player.prevX, player.destX, player.ratio);
     player.y = lerp(player.prevY, player.destY, player.ratio);
 
+    //If it's time to advance the current animation's frame
     if (frameCounter % player.anim.speed === 0) {
+      //If it's looping, wrap the frame, otherwise stop at the last frame
       if (player.anim.loop === true) {
         player.frame = (player.frame + 1) % player.anim.frameCount;
       } else if (player.frame < player.anim.frameCount - 1) {
         player.frame++;
       } else if (player.attacking) {
+        //if the player was attacking, reset them
         player.attacking = false;
         switchAnimation(player, "meditate");
       }
     }
 
+    //If the player is dead,
     if (!player.alive) {
+      //Switch the animation to 'death'
       if (player.anim.row !== 20) {
         switchAnimation(player, 'death');
         player.direction = player.DIRECTIONS.up;
       }
     }
 
+    //If the player's image has loaded
     if (characterImageStruct[player.name]) {
+      //If the player is attacking draw them using their attack dimensions
       if (player.attacking) {
         ctx.drawImage(characterImageStruct[player.name], player.attWidth * player.frame, player.anim.row * player.height + player.direction * player.attHeight, player.attWidth, player.attHeight, player.x - player.attWidth / 2, player.y - player.attHeight / 2, player.attWidth, player.attHeight);
+        //If the player isn't attacking draw them using their normal dimensions
       } else {
         ctx.drawImage(characterImageStruct[player.name], player.width * player.frame, player.height * (player.anim.row + player.direction), player.width, player.height, player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
       }
 
+      //If the player is alive, draw their health bar
       if (player.alive) {
         drawHealthBar(player.x, player.y, player.currentHealth, player.maxHealth);
       }
@@ -232,12 +175,14 @@ var draw = function draw() {
     ctx.restore();
   }
 
-  //Draw boss
+  //Draw the boss
   if (boss) {
 
+    //Calculate the boss's new position
     boss.x = lerp(boss.prevX, boss.destX, boss.ratio);
     boss.y = lerp(boss.prevY, boss.destY, boss.ratio);
 
+    //If the boss needs to advance it's frame, do so
     if (frameCounter % boss.anim.speed === 0) {
       if (boss.anim.loop === true) {
         boss.frame = (boss.frame + 1) % boss.anim.frameCount;
@@ -246,12 +191,14 @@ var draw = function draw() {
       }
     }
 
+    //Alter the bosses color and draw it
     ctx.save();
     ctx.globalAlpha = boss.opacity;
     ctx.filter = "hue-rotate(" + boss.hueRotate + "deg)";
     ctx.drawImage(bossImageStruct[boss.sprite], boss.width * boss.frame, boss.height * (boss.anim.row + boss.direction), boss.width, boss.height, boss.x - boss.width / 2, boss.y - boss.height / 2, boss.width, boss.height);
     ctx.restore();
 
+    //If the boss is dead, fade it out over time, otherwise draw the health bar
     if (!boss.alive) {
       boss.opacity -= 0.005;
       boss.opacity = Math.max(0, boss.opacity);
@@ -261,22 +208,29 @@ var draw = function draw() {
   }
 };
 
+//Switches a player's animation to the given animation
 var switchAnimation = function switchAnimation(player, animation) {
+  //Only switch if the player's current animation doesn't match
   if (player.anim.row != player.ANIMS[animation].row) {
+    //Reset the player's frame and switch the animation
     player.frame = 0;
     player.anim = player.ANIMS[animation];
   }
 };
 
+//Draw the a health bar at the given location
 var drawHealthBar = function drawHealthBar(x, y, health, maxHealth) {
   ctx.save();
   ctx.globalAlpha = 0.8;
   ctx.drawImage(healthContainer, x - healthContainer.width / 2, y + healthContainer.height);
+  //Draw the green part of the health bar as a ratio of current health to max health
   ctx.drawImage(healthBar, 0, 0, healthBar.width * (health / maxHealth), healthBar.height, x - healthBar.width / 2, y + healthContainer.height + 8, healthBar.width * (health / maxHealth), healthBar.height);
   ctx.restore();
 };
 
+//Draw a damage area
 var drawDamageArea = function drawDamageArea(damageArea) {
+  //Configure the canvas and draw the outline of the damage area
   ctx.save();
   ctx.globalAlpha = damageArea.status.opacity;
   ctx.fillStyle = "red";
@@ -287,6 +241,7 @@ var drawDamageArea = function drawDamageArea(damageArea) {
   ctx.fillRect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
   ctx.strokeRect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
 
+  //Create a canvas clip that will stop the draw call from exceeding the bounds of the box
   ctx.beginPath();
   ctx.rect(damageArea.dimensions.x, damageArea.dimensions.y, damageArea.dimensions.w, damageArea.dimensions.h);
   ctx.clip();
@@ -297,6 +252,7 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
   ctx.globalAlpha = ctx.globalAlpha + 0.2;
 
+  //Completely fill the box with arcane script
   while (currentY + textHeight < damageArea.dimensions.h + textHeight) {
     ctx.save();
     var currentPhrase = damageArea.phrases[currentPhraseIndex];
@@ -306,6 +262,7 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
     var width = ctx.measureText(currentPhrase.text).width;
 
+    //Reverse the text if the speed is negative
     if (currentPhrase.speed < 0) {
       ctx.translate(x + damageArea.dimensions.w, y);
       ctx.scale(-1, 1);
@@ -315,6 +272,7 @@ var drawDamageArea = function drawDamageArea(damageArea) {
 
     ctx.fillText(currentPhrase.text, x, y);
 
+    //Repeate the phrase until the edge of the box is met
     while (x + width < damageArea.dimensions.x + damageArea.dimensions.w) {
       x += width;
       ctx.fillText(currentPhrase.text, x, y);
@@ -326,31 +284,41 @@ var drawDamageArea = function drawDamageArea(damageArea) {
       currentPhrase.textOffset = 0;
     }
 
+    //Move to the next phrase
     currentPhraseIndex = (currentPhraseIndex + 1) % damageArea.phrases.length;
     currentY += textHeight;
 
     ctx.restore();
   }
 
+  //Grow the box a little bit (until it reaches full size)
   damageArea.growBox(4);
 
   ctx.restore();
 };
 
+//Draw and update the gems
 var drawAndUpdateGems = function drawAndUpdateGems() {
+  //Iterate over the gems
   for (var i = 0; i < gems.length; i++) {
     var gem = gems[i];
+
+    //Update the gem's position
     gem.x += gem.vector.x;
     gem.y += gem.vector.y;
 
     gem.ticks++;
 
+    //If enough time has passed, activate the gem's "magnet" feature
     if (gem.ticks >= gem.activateMagnet) {
+
+      //Move towards the player
       var player = players[hash];
       var distX = gem.x - player.x;
       var distY = gem.y - player.y;
       var magnitude = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
 
+      //If within range, have the player collect the gem
       if (Math.abs(distX) < 40 && Math.abs(distY) < 40) {
         collectGem();
         gems.splice(i, 1);
@@ -363,12 +331,14 @@ var drawAndUpdateGems = function drawAndUpdateGems() {
         y: -distY / magnitude
       };
     } else if (gem.ticks < gem.activateMagnet) {
+      //Slow the gem down
       gem.vector = {
         x: gem.vector.x * 0.98,
         y: gem.vector.y * 0.98
       };
     }
 
+    //Keep the gem within the bounds of the canvas
     if (gem.x < 0) {
       gem.vector.x *= -1;
       gem.x = 0;
@@ -385,6 +355,7 @@ var drawAndUpdateGems = function drawAndUpdateGems() {
       gem.y = canvas.height - 25;
     }
 
+    //Draw the gem (4 gems on the spritesheet)
     var gemSpriteX = 125 * (gem.sprite % 2);
     var gemSpriteY = 125 * Math.floor(gem.sprite / 2);
 
@@ -393,6 +364,7 @@ var drawAndUpdateGems = function drawAndUpdateGems() {
 };
 'use strict';
 
+//Define useful variables for all files
 var canvas = void 0,
     ctx = void 0;
 var socket = void 0,
@@ -421,14 +393,17 @@ var roomSetup = function roomSetup(roomJoined) {
   console.dir('client roomJoined: ' + room.roomJoined);
 };
 
+//Process a keyDown event from the keyboard
 var keyDownEvent = function keyDownEvent(e) {
   var key = e.which;
   var player = players[hash];
 
+  //Don't process input from dead or nonexistant players
   if (!player || !player.alive) {
     return;
   }
 
+  //Move the player using WASD or Arrow Keys, attack with Space bar or J
   if (key === 87 || key === 38) {
     player.moveUp = true;
   } else if (key === 83 || key === 40) {
@@ -443,14 +418,17 @@ var keyDownEvent = function keyDownEvent(e) {
   }
 };
 
+//Process a keyUp event from the keyboard
 var keyUpEvent = function keyUpEvent(e) {
   var key = e.which;
   var player = players[hash];
 
+  //If the player is dead or nonexistent don't process input
   if (!player || !player.alive) {
     return;
   }
 
+  //Stop the player from moving if they have released the keys
   if (key === 87 || key === 38) {
     player.moveUp = false;
   } else if (key === 83 || key === 40) {
@@ -462,22 +440,22 @@ var keyUpEvent = function keyUpEvent(e) {
   }
 };
 
+//Run this function immediately after the window loads
 var init = function init() {
-  // renderGame(600, 600);
 
-  // canvas = document.querySelector('#viewport');
-  // ctx = canvas.getContext('2d');
-
+  //Grab the assorted spritesheets for later usage
   gemSprite = document.querySelector('#gemSprite');
   dungeonFloor = document.querySelector('#dungeonFloor');
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
+  //Connect the to the server via socket.io
   socket = io.connect();
 
   // Choose a character first
   socket.emit('getChars');
 
+  //Hook up all possible socket events with their corresponding handlers
   socket.on('getHash', function (hash) {
     self.hash = hash;
   });
@@ -502,10 +480,12 @@ var init = function init() {
   socket.on('requestToJoin', requestToJoinRoom);
   socket.on('getOpenRoomList', renderAvailableRooms);
 
+  //Hookup the key event listeners
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
 };
 
+//Run the init function when the window loads
 window.onload = init;
 "use strict";
 
@@ -542,7 +522,7 @@ var GameWindow = function GameWindow(props) {
         "div",
         { "class": "col-xl-4 col-centered" },
         React.createElement("iframe", { width: "560", height: "315",
-          src: "http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q",
+          src: "https://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q",
           frameBorder: "0", allow: "autoplay; encrypted-media", id: "videoFrame" })
       )
     )
@@ -553,25 +533,30 @@ var GameWindow = function GameWindow(props) {
 var renderGame = function renderGame(width, height) {
   ReactDOM.render(React.createElement(GameWindow, { width: width, height: height }), document.querySelector("#main"));
 
+  //Hook up the canvas to JS code
   canvas = document.querySelector('#viewport');
   ctx = canvas.getContext('2d');
 };
 
+//Make a call to render the game info section
 var renderGameInfo = function renderGameInfo(gameInfo) {
   ReactDOM.render(React.createElement(GameInfo, { info: gameInfo }), document.querySelector("#gameInfo"));
 };
 
+//Construct the game info window using the given player and boss info
 var GameInfo = function GameInfo(props) {
 
+  //Calculate state variables like button usability and progress bar width
   var disabled = props.info.player.points === 0;
   var expBetweenLevels = props.info.player.nextLevel - props.info.player.prevLevel;
   var expRatio = Math.floor((props.info.player.exp - props.info.player.prevLevel) / expBetweenLevels * 100);
   var ratioString = expRatio + "%";
   var style = {
     width: ratioString
-  };
 
-  return React.createElement(
+    //Return the JSX version of the game info
+    //*Note: Render changes based on whether the player is alive or dead
+  };return React.createElement(
     "div",
     null,
     React.createElement(
@@ -738,6 +723,7 @@ var GameInfo = function GameInfo(props) {
   );
 };
 
+//Construct the character selection window
 var CharSelect = function CharSelect(props) {
 
   //Map the characters object into an array
@@ -745,7 +731,7 @@ var CharSelect = function CharSelect(props) {
     return props.characters[character];
   });
 
-  //Return jsx to inform that player that the characters are still loading
+  //Return JSX to inform that player that the characters are still loading
   if (charactersArray.length === 0) {
     return React.createElement(
       "div",
@@ -820,6 +806,7 @@ var CharSelect = function CharSelect(props) {
   });
 
   //Return all of the panels (the passed in array auto formats)
+  //*Note: break the characters into groups of 4 to help presentation
   return React.createElement(
     "div",
     null,
@@ -846,6 +833,7 @@ var CharSelect = function CharSelect(props) {
   );
 };
 
+//Render the character selection window
 var renderCharacterSelect = function renderCharacterSelect(chars) {
   ReactDOM.render(React.createElement(CharSelect, { characters: chars }), document.querySelector("#main"));
 };
@@ -1023,17 +1011,20 @@ var renderAvailableRooms = function renderAvailableRooms(rooms) {
 };
 'use strict';
 
+//Kinda self-explanatory- but this updates the local player and draws to the canvas
 var update = function update() {
-  // Update code
   updateLocalPosition();
   draw();
 
+  //Store the current animation frame
   animationFrame = requestAnimationFrame(update);
 };
 
+//Update the local player's position based on input and state
 var updateLocalPosition = function updateLocalPosition() {
   var player = players[hash];
 
+  //If the player is dead, stop them from moving and switch the animation to death
   if (!player.alive) {
     if (player.anim.row !== 20) {
       switchAnimation(player, 'death');
@@ -1048,11 +1039,14 @@ var updateLocalPosition = function updateLocalPosition() {
     return;
   }
 
+  //Update the players position
   player.prevX = player.x;
   player.prevY = player.y;
 
+  //Based on player state (thanks to keyboard input) update position
   if (player.moveLeft && player.x >= 2 + player.width / 2) {
     player.destX -= 2;
+    //Also change player direction accordingly
     player.direction = player.DIRECTIONS.left;
   }
 
@@ -1071,6 +1065,7 @@ var updateLocalPosition = function updateLocalPosition() {
     player.direction = player.DIRECTIONS.down;
   }
 
+  //Switch player's animation depending on movement and attack state
   if (!player.attacking) {
     if (player.moveUp || player.moveDown || player.moveLeft || player.moveRight) {
       switchAnimation(player, 'walk');
@@ -1081,10 +1076,12 @@ var updateLocalPosition = function updateLocalPosition() {
     switchAnimation(player, 'attack');
   }
 
+  //Reset player's ratio and send an update
   player.ratio = 0.05;
   socket.emit('playerMovement', player);
 };
 
+//Process character data sent from the server
 var handleChars = function handleChars(data) {
   // Load character files into memory for later usage
   var charKeys = Object.keys(data);
@@ -1094,6 +1091,7 @@ var handleChars = function handleChars(data) {
 
     var charImage = new Image();
 
+    //When an image loads, place it in the character image struct
     charImage.onload = function () {
       characterImageStruct[charKeys[i]] = charImage;
     };
@@ -1105,9 +1103,11 @@ var handleChars = function handleChars(data) {
     _loop(i);
   }
 
+  //Render the character selection window
   renderCharacterSelect(data);
 };
 
+//Send a message to the server notifying it of the player's character selection
 var chooseCharacter = function chooseCharacter(e) {
   socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
 };
@@ -1143,10 +1143,12 @@ var handleLobby = function handleLobby(data) {
   socket.emit('requestOpenRoomList');
 };
 
+//Format player and boss data for Game Info render
 var aggregateGameInfo = function aggregateGameInfo() {
   var player = players[hash];
   var bossDetails = {};
 
+  //Package boss data
   if (boss && boss.alive) {
     bossDetails = {
       name: boss.name,
@@ -1163,6 +1165,7 @@ var aggregateGameInfo = function aggregateGameInfo() {
     };
   }
 
+  //Package player data
   var info = {
     player: {
       maxHealth: player.maxHealth,
@@ -1182,15 +1185,18 @@ var aggregateGameInfo = function aggregateGameInfo() {
   return info;
 };
 
+//Set this player to the data sent from the server
 var setPlayer = function setPlayer(data) {
   hash = data.hash;
   players[hash] = data;
   players[hash].room = room.roomJoined;
 
+  //Render the game window as well as the game info window
   renderGame(600, 600, info);
   var info = aggregateGameInfo();
   renderGameInfo(info);
 
+  //If the update loop isn't running, start it
   if (!animationFrame) {
     animationFrame = requestAnimationFrame(update);
   }
@@ -1211,6 +1217,8 @@ var sendAttack = function sendAttack() {
   socket.emit('sendAttack', attack, player.room);
 };
 
+//Notifies the player to switch their animation to attacking
+//*Note: Soon to be deprecated!
 var receiveAttack = function receiveAttack(data) {
   if (players[data.hash]) {
     players[data.hash].attacking = true;
@@ -1218,17 +1226,21 @@ var receiveAttack = function receiveAttack(data) {
   }
 };
 
+//Process player updates sent from the server
 var updatePlayer = function updatePlayer(data) {
+  //If the character doesn't exist locally, save all of their info
   if (!players[data.hash]) {
     players[data.hash] = data;
   }
 
+  //Only process new updates
   if (players[data.hash].lastUpdate >= data.lastUpdate) {
     return;
   }
 
   var player = players[data.hash];
 
+  //Determine if game info needs to be re-rendered
   var flagToReRenderInfo = false;
   if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems || player.alive != data.alive) {
     flagToReRenderInfo = true;
@@ -1247,6 +1259,7 @@ var updatePlayer = function updatePlayer(data) {
   player.gems = data.gems;
   player.alive = data.alive;
 
+  //If player info changed, re-render game info
   if (flagToReRenderInfo) {
     var info = aggregateGameInfo();
     renderGameInfo(info);
@@ -1257,6 +1270,7 @@ var updatePlayer = function updatePlayer(data) {
     return;
   }
 
+  //For all other players, update position, and states
   player.prevX = data.prevX;
   player.prevY = data.prevY;
   player.destX = data.destX;
@@ -1271,18 +1285,22 @@ var updatePlayer = function updatePlayer(data) {
   player.attacking = data.attacking;
   player.lastUpdate = data.lastUpdate;
 
+  //If the player is attacking, switch their animation to reflect that
   if (player.attacking) {
     switchAnimation(player, 'attack');
   }
 };
 
+//Process a request from the server to delete a player
 var deletePlayer = function deletePlayer(data) {
   if (players[data.hash]) {
     delete players[data.hash];
   }
 };
 
+//Disconnect from the server
 var disconnect = function disconnect() {
+  //Cancel the update loop and delete this player
   if (hash) {
     cancelAnimationFrame(animationFrame);
     delete players[hash];
@@ -1290,27 +1308,35 @@ var disconnect = function disconnect() {
   }
 };
 
+//Spawn a boss given data from the server
 var spawnBoss = function spawnBoss(data) {
   boss = data;
+
+  //Update game info
   var info = aggregateGameInfo();
   renderGameInfo(info);
 };
 
+//Update a boss given data from the server
 var updateBoss = function updateBoss(data) {
+  //If the boss hasn't been spawned yet for this player, ignore updates
   if (!boss) {
     return;
   }
 
   var keys = Object.keys(data);
 
+  //Iterate over the sent keys and update the current boss object
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
     boss[key] = data[key];
   }
 };
 
+//Process a request from the server to update a boss's attack
 var updateBossAttack = function updateBossAttack(data) {
   var progress = data.progress / data.complete;
+  //Create a new damage area if the attack is new, or update an existing one
   if (!damageAreas[data.id]) {
     damageAreas[data.id] = new DamageArea({
       x: data.x, y: data.y, w: data.w, h: data.h
@@ -1320,14 +1346,18 @@ var updateBossAttack = function updateBossAttack(data) {
   }
 };
 
+//Process a request from the server to resolve a boss's attack
 var removeBossAttack = function removeBossAttack(data) {
+  //if the attack exists, remove it so that it won't be drawn
   if (damageAreas[data.id]) {
     damageAreas[data.id] = undefined;
     delete damageAreas[data.id];
   }
 };
 
+//Process a request from the server to kill the boss
 var bossDeath = function bossDeath() {
+  //Animate the boss appropriately and re-render the game info
   boss.anim = boss.ANIMS.death;
   boss.alive = false;
   damageAreas = {};
@@ -1335,7 +1365,9 @@ var bossDeath = function bossDeath() {
   renderGameInfo(info);
 };
 
+//Handle a player request to upgrade their character
 var upgradeChar = function upgradeChar(e) {
+  //Determine which stat they wish to upgrade based on the button they pushed
   var id = e.target.getAttribute('id');
   switch (id) {
     case 'increaseHealth':
@@ -1350,10 +1382,12 @@ var upgradeChar = function upgradeChar(e) {
   }
 };
 
+//Process a request from the server to dispense a given number of gems
 var dispenseGems = function dispenseGems(data) {
   var gemCount = data.gems;
 
   for (var i = 0; i < gemCount; i++) {
+    //Give the gem a random velocity
     var randAngle = Math.random() * 360;
     var radian = randAngle * Math.PI / 180;
     var speed = 20 * Math.random() + 2;
@@ -1361,8 +1395,11 @@ var dispenseGems = function dispenseGems(data) {
       x: Math.sin(radian) * speed,
       y: Math.cos(radian) * speed
     };
+
+    //Randomly choose one of four gem sprites
     var sprite = Math.floor(Math.random() * 4);
 
+    //Construct the gem object
     var gem = {
       x: boss.x,
       y: boss.y,
@@ -1374,6 +1411,7 @@ var dispenseGems = function dispenseGems(data) {
       sprite: sprite
     };
 
+    //Add the gem to the gems array for draw calls
     gems.push(gem);
   }
 };

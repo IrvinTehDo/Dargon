@@ -1,3 +1,4 @@
+//Define useful variables for all files
 let canvas,
   ctx;
 let socket,
@@ -26,14 +27,17 @@ const roomSetup = (roomJoined) => {
   console.dir(`client roomJoined: ${room.roomJoined}`);
 };
 
+//Process a keyDown event from the keyboard
 const keyDownEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
+  //Don't process input from dead or nonexistant players
   if (!player || !player.alive) {
     return;
   }
 
+  //Move the player using WASD or Arrow Keys, attack with Space bar or J
   if (key === 87 || key === 38) {
     player.moveUp = true;
   } else if (key === 83 || key === 40) {
@@ -48,14 +52,17 @@ const keyDownEvent = (e) => {
   }
 };
 
+//Process a keyUp event from the keyboard
 const keyUpEvent = (e) => {
   const key = e.which;
   const player = players[hash];
 
+  //If the player is dead or nonexistent don't process input
   if (!player || !player.alive) {
     return;
   }
 
+  //Stop the player from moving if they have released the keys
   if (key === 87 || key === 38) {
     player.moveUp = false;
   } else if (key === 83 || key === 40) {
@@ -67,22 +74,22 @@ const keyUpEvent = (e) => {
   }
 };
 
+//Run this function immediately after the window loads
 const init = () => {
-  // renderGame(600, 600);
 
-  // canvas = document.querySelector('#viewport');
-  // ctx = canvas.getContext('2d');
-
+  //Grab the assorted spritesheets for later usage
   gemSprite = document.querySelector('#gemSprite');
   dungeonFloor = document.querySelector('#dungeonFloor');
   healthContainer = document.querySelector('#healthContainer');
   healthBar = document.querySelector('#healthBar');
 
+  //Connect the to the server via socket.io
   socket = io.connect();
 
   // Choose a character first
   socket.emit('getChars');
 
+  //Hook up all possible socket events with their corresponding handlers
   socket.on('getHash', (hash) => {
     self.hash = hash;
   });
@@ -107,8 +114,10 @@ const init = () => {
   socket.on('requestToJoin', requestToJoinRoom);
   socket.on('getOpenRoomList', renderAvailableRooms);    
 
+  //Hookup the key event listeners
   document.body.addEventListener('keydown', keyDownEvent);
   document.body.addEventListener('keyup', keyUpEvent);
 };
 
+//Run the init function when the window loads
 window.onload = init;

@@ -15,7 +15,7 @@ const GameWindow = (props) => {
         
         <div class="col-xl-4 col-centered">
           <iframe width="560" height="315" 
-            src="http://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q"
+            src="https://www.youtube.com/embed/videoseries?list=PLbzURmDMdJdPlsSgLqqb3IwnY5A0jWK_q"
             frameBorder="0" allow="autoplay; encrypted-media" id="videoFrame">
           </iframe>
         </div>
@@ -31,11 +31,12 @@ const renderGame = (width, height) => {
     document.querySelector("#main")
   );
   
+  //Hook up the canvas to JS code
   canvas = document.querySelector('#viewport');
   ctx = canvas.getContext('2d');
-  
 };
 
+//Make a call to render the game info section
 const renderGameInfo = (gameInfo) => {
   ReactDOM.render(
     <GameInfo info={gameInfo} />,
@@ -43,8 +44,10 @@ const renderGameInfo = (gameInfo) => {
   );
 };
 
+//Construct the game info window using the given player and boss info
 const GameInfo = (props) => {
   
+  //Calculate state variables like button usability and progress bar width
   const disabled = props.info.player.points === 0;
   const expBetweenLevels = props.info.player.nextLevel - props.info.player.prevLevel;
   const expRatio = Math.floor(((props.info.player.exp - props.info.player.prevLevel) / expBetweenLevels) * 100);
@@ -53,6 +56,8 @@ const GameInfo = (props) => {
     width: ratioString,
   }
   
+  //Return the JSX version of the game info
+  //*Note: Render changes based on whether the player is alive or dead
   return (
     <div>
       <h1>Game Info</h1>
@@ -117,6 +122,7 @@ const GameInfo = (props) => {
   );
 }
 
+//Construct the character selection window
 const CharSelect = (props) => {
   
   //Map the characters object into an array
@@ -124,7 +130,7 @@ const CharSelect = (props) => {
     return props.characters[character];
   });
   
-  //Return jsx to inform that player that the characters are still loading
+  //Return JSX to inform that player that the characters are still loading
   if(charactersArray.length === 0){
     return (
       <div>
@@ -160,6 +166,7 @@ const CharSelect = (props) => {
   });
   
   //Return all of the panels (the passed in array auto formats)
+  //*Note: break the characters into groups of 4 to help presentation
   return (
     <div>
       <h2 id="charSelectHeader">Select Your Character</h2>
@@ -178,6 +185,7 @@ const CharSelect = (props) => {
   );
 };
 
+//Render the character selection window
 const renderCharacterSelect = (chars) => {
   ReactDOM.render(
     <CharSelect characters={chars} />,

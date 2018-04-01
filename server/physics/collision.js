@@ -1,5 +1,5 @@
+// Basic AABB collision detection between two rectangles
 const AABB = (rect1, rect2) => {
-  // AABB collision, checks two rectangles.
   if (rect1.x < rect2.x + rect2.width &&
       rect1.x + rect1.width > rect2.x &&
       rect1.y < rect2.y + rect2.height &&

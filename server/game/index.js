@@ -279,11 +279,11 @@ const resolveBossAttacks = (players, rooms, removeAttack, updatePlayer) => {
           if (hit && player.alive) {
             const damage = calcDamage(boss.being, player);
             player.currentHealth -= damage;
-            
-            if(player.currentHealth <= 0){
+
+            if (player.currentHealth <= 0) {
               player.alive = false;
             }
-            
+
             updatePlayer(room, player);
           }
         }

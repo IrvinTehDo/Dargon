@@ -108,8 +108,6 @@ const aggregateGameInfo = () => {
     boss: bossDetails,
   };
   
-  console.log(info);
-  
   return info;
 }
 
@@ -162,7 +160,7 @@ const updatePlayer = (data) => {
   const player = players[data.hash];
 
   let flagToReRenderInfo = false;
-  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems || data.gems){
+  if(player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems){
     flagToReRenderInfo = true;
   }
   

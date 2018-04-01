@@ -102,6 +102,7 @@ const draw = () => {
     
     ctx.save();
     ctx.globalAlpha = boss.opacity;
+    ctx.filter = `hue-rotate(${boss.hueRotate}deg)`;
     ctx.drawImage(
       bossImageStruct[boss.sprite],
       boss.width * boss.frame,
@@ -249,17 +250,17 @@ const drawAndUpdateGems = () => {
     if(gem.x < 0){
       gem.vector.x *= -1;
       gem.x = 0;
-    } else if(gem.x > canvas.width){
+    } else if(gem.x > canvas.width - 25){
       gem.vector.x *= -1;
-      gem.x = canvas.width;
+      gem.x = canvas.width - 25;
     }
     
     if(gem.y < 0){
       gem.vector.y *= -1;
       gem.y = 0;
-    } else if(gem.y > canvas.height){
+    } else if(gem.y > canvas.height - 25){
       gem.vector.y *= -1;
-      gem.y = canvas.height;
+      gem.y = canvas.height - 25;
     }
     
     const gemSpriteX = 125 * (gem.sprite % 2);

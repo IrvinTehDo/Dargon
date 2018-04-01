@@ -54,6 +54,7 @@ class Dragon {
     this.gems = stats.health;
 
     this.opacity = 1;
+    this.hueRotate = Math.floor(Math.random() * 360);
     this.alive = true;
 
     this.x = location.x;

@@ -1,4 +1,4 @@
-Dungeon Tileset:
-https://opengameart.org/content/dungeon-tileset
+Dungeon Image:
+https://drunkenzebrastudio.wordpress.com/2011/12/11/belated-environments/
 Gem Sprites:
 "Clint Bellanger": https://opengameart.org/content/gem-icons

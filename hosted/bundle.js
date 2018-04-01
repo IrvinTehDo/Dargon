@@ -239,6 +239,7 @@ var draw = function draw() {
 
     ctx.save();
     ctx.globalAlpha = boss.opacity;
+    ctx.filter = "hue-rotate(" + boss.hueRotate + "deg)";
     ctx.drawImage(bossImageStruct[boss.sprite], boss.width * boss.frame, boss.height * (boss.anim.row + boss.direction), boss.width, boss.height, boss.x - boss.width / 2, boss.y - boss.height / 2, boss.width, boss.height);
     ctx.restore();
 
@@ -362,17 +363,17 @@ var drawAndUpdateGems = function drawAndUpdateGems() {
     if (gem.x < 0) {
       gem.vector.x *= -1;
       gem.x = 0;
-    } else if (gem.x > canvas.width) {
+    } else if (gem.x > canvas.width - 25) {
       gem.vector.x *= -1;
-      gem.x = canvas.width;
+      gem.x = canvas.width - 25;
     }
 
     if (gem.y < 0) {
       gem.vector.y *= -1;
       gem.y = 0;
-    } else if (gem.y > canvas.height) {
+    } else if (gem.y > canvas.height - 25) {
       gem.vector.y *= -1;
-      gem.y = canvas.height;
+      gem.y = canvas.height - 25;
     }
 
     var gemSpriteX = 125 * (gem.sprite % 2);
@@ -942,8 +943,6 @@ var aggregateGameInfo = function aggregateGameInfo() {
     boss: bossDetails
   };
 
-  console.log(info);
-
   return info;
 };
 
@@ -995,7 +994,7 @@ var updatePlayer = function updatePlayer(data) {
   var player = players[data.hash];
 
   var flagToReRenderInfo = false;
-  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems || data.gems) {
+  if (player.exp != data.exp || player.pointsToAllocate != data.pointsToAllocate || player.gems != data.gems) {
     flagToReRenderInfo = true;
   }
 

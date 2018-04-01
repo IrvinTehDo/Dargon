@@ -1045,7 +1045,7 @@ var updateLocalPosition = function updateLocalPosition() {
   player.prevX = player.x;
   player.prevY = player.y;
 
-  if (player.moveLeft && player.x >= 2) {
+  if (player.moveLeft && player.x >= 2 + player.width / 2) {
     player.destX -= 2;
     player.direction = player.DIRECTIONS.left;
   }
@@ -1055,7 +1055,7 @@ var updateLocalPosition = function updateLocalPosition() {
     player.direction = player.DIRECTIONS.right;
   }
 
-  if (player.moveUp && player.y >= 2) {
+  if (player.moveUp && player.y >= 2 + player.height / 2) {
     player.destY -= 2;
     player.direction = player.DIRECTIONS.up;
   }

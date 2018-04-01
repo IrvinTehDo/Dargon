@@ -7,11 +7,8 @@ const collision = require('./collision.js');
 
 // Setup interaction with main node server
 
+// If hits enemy, return true.
 const checkHitEnemy = (attack, enemy) => {
-//  if (!target.sprite === 'dragon') {
-//    return false;
-//  }
-
   if (collision.AABB(attack, enemy)) {
     console.log('Hit enemy');
     return true;

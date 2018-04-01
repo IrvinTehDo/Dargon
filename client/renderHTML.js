@@ -204,6 +204,7 @@ const joinRoom = (e, roomName, create) => {
   return false;
 };
 
+// Creates the HTML for the lobby such as room queuing, joining, and creation. Also holds the open room list.
 const renderLobby = (rooms) => {
     ReactDOM.render(
         <div id="lobbyContainer" class="container">
@@ -258,10 +259,12 @@ const renderLobby = (rooms) => {
    socket.emit('requestOpenRoomList');
 };
 
+// Handles error emition.
 const emitError = (error) => {
     const errorContainer = document.querySelector("#error");
     errorContainer.classList.remove("hidden");
     
+    // Message will hide after 3 seconds.
     setTimeout(() => {
       errorContainer.classList.add("hidden");
     }, 3000);
@@ -269,6 +272,7 @@ const emitError = (error) => {
     errorContainer.innerHTML = error;
 };
 
+// Creates the room box for when we look for open rooms that are joinable. 
 const makeRoomBox = (roomData) => {
     console.dir(roomData);
     console.log(roomData.roomName);
@@ -290,7 +294,7 @@ const makeRoomBox = (roomData) => {
     button.innerHTML = 'Join Room';
     button.className = 'btn btn-lg btn-info';
     button.onclick = () => {
-        selectRoom(roomData.roomName);
+        requestToJoinRoom(roomData.roomName);
     };
     
     innerRoomBox.appendChild(roomName);
@@ -299,6 +303,8 @@ const makeRoomBox = (roomData) => {
     return roomBox;
 };
 
+// Calls for makeRoomBox and appends open rooms to a larger 
+// container for the client to choose which open room to join.
 const renderAvailableRooms = (rooms) => {
     const roomList = document.querySelector('#roomList');
     roomList.innerHTML = "";

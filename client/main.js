@@ -16,11 +16,11 @@ let dungeonFloor,
 let healthContainer,
   healthBar;
 
+// Sets up the client game room they're about to join.
 const roomSetup = (roomJoined) => {
   console.dir(roomJoined);
   room.roomJoined = roomJoined;
 
-  // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
   console.dir(`client roomJoined: ${room.roomJoined}`);

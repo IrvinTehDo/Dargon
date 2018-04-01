@@ -135,6 +135,7 @@ const init = (ioInstance) => {
         return;
       }
 
+      // Adds attack to the list of attacks to be processed by server.
       instanceHandler.addAttack(roomName, data, player);
       console.log(`attack recieved from ${roomName}`);
       // io.sockets.in(socket.roomJoined).emit('receiveAttack', data);
@@ -179,12 +180,10 @@ const init = (ioInstance) => {
         if (instanceHandler.roomJoin(roomName, socket)) {
           if (socket.roomJoined === 'lobby') {
             delete instanceHandler.rooms.lobby.players[socket.hash];
-            delete instanceHandler.rooms.lobby.players[socket.hash];
           } else {
             delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
           }
           socket.roomJoined = roomName;
-          // To Do: Remove player/socket from other instance/room and move them to the new one.
           socket.emit('joined', roomName);
           console.log('create room and joined');
         }
@@ -196,7 +195,6 @@ const init = (ioInstance) => {
       if (instanceHandler.roomJoin(roomName, socket, io)) {
         if (socket.roomJoined === 'lobby') {
           delete instanceHandler.rooms.lobby.players[socket.hash];
-          delete instanceHandler.rooms.lobby.players[socket.hash];
         } else {
           delete instanceHandler.rooms[socket.roomJoined].players[socket.hash];
         }
@@ -207,10 +205,12 @@ const init = (ioInstance) => {
       }
     });
 
+    // Add socket to queue of players.
     socket.on('joinQueue', () => {
       instanceHandler.addToQueue(socket, io);
     });
 
+    // requests an array of open rooms
     socket.on('requestOpenRoomList', () => {
       socket.emit('getOpenRoomList', instanceHandler.getOpenRooms());
     });
@@ -225,6 +225,7 @@ const init = (ioInstance) => {
       players[socket.hash] = undefined;
       delete players[socket.hash];
       socket.leave(socket.roomJoined);
+      // Should be an open space in a game now, update open rooms
       io.sockets.in('lobby').emit('getOpenRoomList', instanceHandler.getOpenRooms());
     });
   });
@@ -267,11 +268,13 @@ const update = () => {
     game.spliceSpawnQueue(i);
   }
 
-  // 'lobby' is temporary, should be replaced with roomName.
+  // Process attack array
   instanceHandler.processAttacks(players, io);
 
+  // process queue array
   instanceHandler.processQueue(io);
 
+  // server tick of 20
   setTimeout(update, 20);
 };
 

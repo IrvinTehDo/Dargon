@@ -82,6 +82,7 @@ const chooseCharacter = (e) => {
   socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
 };
 
+// Initiates client-side queueing. Will gray out and make button unpressable while player is waiting to join an instance.
 const queue = (e) => {
   e.target.disabled = true;
   e.target.innerHTML = 'queued';
@@ -89,6 +90,7 @@ const queue = (e) => {
   socket.emit('joinQueue');
 };
 
+// Updates the queue count of the player.
 const updateQueue = (hashes) => {
   for (let i = 0; i < hashes.length; i++) {
     if (hash === hashes[i]) {
@@ -98,17 +100,16 @@ const updateQueue = (hashes) => {
   }
 };
 
+// Requests to join room.
 const requestToJoinRoom = (roomName) => {
   socket.emit('joinRoom', roomName);
 };
 
-const selectRoom = (roomName) => {
-  socket.emit('joinRoom', roomName);
-};
-
+// Handles joining the lobby.
 const handleLobby = (data) => {
   room.roomJoined = 'lobby';
   renderLobby(data);
+  // Request rooms that are open
   socket.emit('requestOpenRoomList');
 };
 
@@ -166,6 +167,7 @@ const setPlayer = (data) => {
   }
 };
 
+// Sends player attack information to the server for collision detection.
 const sendAttack = () => {
   const player = players[hash];
 

@@ -9,6 +9,8 @@ const rooms = {};
 const queue = [];
 
 const setUpLobby = () => {
+  // Lobby messes up real bad and rather not use dot notation than
+  // having to implement a check for it every time.
   /*eslint-disable */
   rooms['lobby'] = {};
   rooms['lobby'].roomName = 'lobby';
@@ -18,8 +20,7 @@ const setUpLobby = () => {
   /* eslint-enable */
 };
 
-// 'roomError' doesnt exist yet, can change to whatever at this point
-
+// Initializes and creates an instance.
 const roomInit = (roomName, reqSocket) => {
   if (rooms[roomName]) {
     // send error here cause room already exists
@@ -39,7 +40,9 @@ const roomInit = (roomName, reqSocket) => {
   return true;
 };
 
+// Attempts to join a room, returns true if we joined a room successfully.
 const roomJoin = (roomName, reqSocket) => {
+  // error if room doesn't exist.
   if (!rooms[roomName]) {
     reqSocket.emit('roomError', `${roomName} does not exist`);
     console.dir(`${roomName} does not exist`);
@@ -64,9 +67,6 @@ const processAttacks = (players, io) => {
         // Get all enemies/bosses
         const keys = Object.keys(rooms[roomKeys[q]]
           .enemies); // Object.keys(rooms[roomName].enemies);
-        // TO DO once rooms are properly set up: change rooms.lobby to rooms[roomName]
-        // and implement a check to make sure we're not checking lobby.
-        // For each attack
         for (let i = 0; i < rooms[roomKeys[q]].attacks.length; i++) {
           // For each enemy
           for (let z = 0; z < keys.length; z++) {
@@ -76,7 +76,6 @@ const processAttacks = (players, io) => {
 
             if (hit) {
               // Handle damage calculations here
-            // game.takeDamage('lobby', 1, io); // temporary call to lobby
               const damage = game.calcDamage(rooms[roomKeys[q]].attacks[i].player, enemy);
               game.takeDamage(roomKeys[q], damage, players, rooms[roomKeys[q]].players, io);
               console.log('hit');
@@ -93,6 +92,7 @@ const processAttacks = (players, io) => {
   }
 };
 
+// Add an attack to be processed next server tick.
 const addAttack = (roomName, attack, player) => {
   console.log('attack added');
   const att = attack;
@@ -101,7 +101,7 @@ const addAttack = (roomName, attack, player) => {
   console.dir(rooms[roomName].attacks);
 };
 
-
+// Checks for what player hashes are currently in queue and returns a temporary array of hashs.
 const hashesInQueue = () => {
   const tempQueueHashes = [];
 
@@ -116,7 +116,7 @@ const addToQueue = (socket, io) => {
   // Add hash to queue
   console.log(`added ${socket.hash} to queue`);
   queue.push(socket);
-  // io.sockets.in('lobby').emit('updateQueue', queue);
+  // Updates all players in lobby to update queue.
   io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
 };
 
@@ -124,11 +124,14 @@ const processQueue = (io) => {
   // Process Queue
   const roomKeys = Object.keys(rooms);
 
-
+  // If fewer than 3, we don't make a new instance
+  // but try to fill up ones that don't have maximum players.
   if (queue.length <= 3) {
     for (let z = 0; z < roomKeys.length; z++) {
       const playerKey = Object.keys(rooms[roomKeys[z]].players);
       if (playerKey.length <= 7 && rooms[roomKeys[z]].roomName !== 'lobby' && queue.length > 0) {
+        // ask the socket to join, cause it gets messy
+        // if we try to do it on the server's end.
         queue[0].emit('requestToJoin', rooms[roomKeys[z]].roomName);
         queue.splice(0);
         io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
@@ -136,14 +139,16 @@ const processQueue = (io) => {
       }
     }
   } else if (queue.length > 3) {
+    // if more than 3 players in queue, make a new instance for them.
     let time = new Date().getTime();
     let hash = xxh.h32(`${time}`, 0x010A020B).toString(16).substr(0, 4);
-
+    // randomize until we find an empty.
     while (rooms[hash]) {
       time = new Date().getTime();
       hash = xxh.h32(`${time}`, 0x010A020B).toString(16).substr(0, 4);
     }
 
+    // Initialize the room and asks the first 4 in queue to join it.
     roomInit(hash, queue[0]);
 
     queue[0].emit('requestToJoin', rooms[hash].roomName);
@@ -152,10 +157,12 @@ const processQueue = (io) => {
     queue[3].emit('requestToJoin', rooms[hash].roomName);
 
     queue.splice(0, 4);
+    // update queue
     io.sockets.in('lobby').emit('updateQueue', hashesInQueue());
   }
 };
 
+// returns array of rooms that aren't at maximum player, in this case 8
 const getOpenRooms = () => {
   const availableRooms = {};
 

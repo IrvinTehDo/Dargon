@@ -411,11 +411,11 @@ var dungeonFloor = void 0,
 var healthContainer = void 0,
     healthBar = void 0;
 
+// Sets up the client game room they're about to join.
 var roomSetup = function roomSetup(roomJoined) {
   console.dir(roomJoined);
   room.roomJoined = roomJoined;
 
-  // To Do: On room join code
   // Ask for player data and set up the game.
   socket.emit('requestCharacterData');
   console.dir('client roomJoined: ' + room.roomJoined);
@@ -869,6 +869,7 @@ var joinRoom = function joinRoom(e, roomName, create) {
   return false;
 };
 
+// Creates the HTML for the lobby such as room queuing, joining, and creation. Also holds the open room list.
 var renderLobby = function renderLobby(rooms) {
   ReactDOM.render(React.createElement(
     "div",
@@ -963,10 +964,12 @@ var renderLobby = function renderLobby(rooms) {
   socket.emit('requestOpenRoomList');
 };
 
+// Handles error emition.
 var emitError = function emitError(error) {
   var errorContainer = document.querySelector("#error");
   errorContainer.classList.remove("hidden");
 
+  // Message will hide after 3 seconds.
   setTimeout(function () {
     errorContainer.classList.add("hidden");
   }, 3000);
@@ -974,6 +977,7 @@ var emitError = function emitError(error) {
   errorContainer.innerHTML = error;
 };
 
+// Creates the room box for when we look for open rooms that are joinable. 
 var makeRoomBox = function makeRoomBox(roomData) {
   console.dir(roomData);
   console.log(roomData.roomName);
@@ -995,7 +999,7 @@ var makeRoomBox = function makeRoomBox(roomData) {
   button.innerHTML = 'Join Room';
   button.className = 'btn btn-lg btn-info';
   button.onclick = function () {
-    selectRoom(roomData.roomName);
+    requestToJoinRoom(roomData.roomName);
   };
 
   innerRoomBox.appendChild(roomName);
@@ -1004,6 +1008,8 @@ var makeRoomBox = function makeRoomBox(roomData) {
   return roomBox;
 };
 
+// Calls for makeRoomBox and appends open rooms to a larger 
+// container for the client to choose which open room to join.
 var renderAvailableRooms = function renderAvailableRooms(rooms) {
   var roomList = document.querySelector('#roomList');
   roomList.innerHTML = "";
@@ -1106,6 +1112,7 @@ var chooseCharacter = function chooseCharacter(e) {
   socket.emit('chooseCharacter', { id: e.target.getAttribute('selectid') });
 };
 
+// Initiates client-side queueing. Will gray out and make button unpressable while player is waiting to join an instance.
 var queue = function queue(e) {
   e.target.disabled = true;
   e.target.innerHTML = 'queued';
@@ -1113,6 +1120,7 @@ var queue = function queue(e) {
   socket.emit('joinQueue');
 };
 
+// Updates the queue count of the player.
 var updateQueue = function updateQueue(hashes) {
   for (var i = 0; i < hashes.length; i++) {
     if (hash === hashes[i]) {
@@ -1122,17 +1130,16 @@ var updateQueue = function updateQueue(hashes) {
   }
 };
 
+// Requests to join room.
 var requestToJoinRoom = function requestToJoinRoom(roomName) {
   socket.emit('joinRoom', roomName);
 };
 
-var selectRoom = function selectRoom(roomName) {
-  socket.emit('joinRoom', roomName);
-};
-
+// Handles joining the lobby.
 var handleLobby = function handleLobby(data) {
   room.roomJoined = 'lobby';
   renderLobby(data);
+  // Request rooms that are open
   socket.emit('requestOpenRoomList');
 };
 
@@ -1189,6 +1196,7 @@ var setPlayer = function setPlayer(data) {
   }
 };
 
+// Sends player attack information to the server for collision detection.
 var sendAttack = function sendAttack() {
   var player = players[hash];
 

@@ -19,7 +19,7 @@ const port = process.env.PORT || process.env.NODE_PORT || 3000;
 const app = express();
 
 // Configure application
-app.engine('handlebars', expressHandlebars({ defaultLayout: 'main' }));
+app.engine('handlebars', expressHandlebars.engine({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
 app.set('views', `${__dirname}/../views`);
 
